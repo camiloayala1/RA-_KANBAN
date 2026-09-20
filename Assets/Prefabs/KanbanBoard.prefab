@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2416407487183854552}
   - component: {fileID: 8227487123901199563}
   - component: {fileID: 2485708171314529408}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Columna_Terminado
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -315,7 +315,7 @@ GameObject:
   - component: {fileID: 3695387120262568877}
   - component: {fileID: 6146934418798080553}
   - component: {fileID: 5517519520692867145}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -471,7 +471,7 @@ GameObject:
   - component: {fileID: 5908723691844208655}
   - component: {fileID: 8762577718386162222}
   - component: {fileID: 4732123193761563025}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Columna_EnProceso
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -661,7 +661,7 @@ GameObject:
   - component: {fileID: 240345876908177038}
   - component: {fileID: 6214513281593900899}
   - component: {fileID: 1555810673344500834}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Columna_Pendiente
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -785,7 +785,7 @@ GameObject:
   - component: {fileID: 1926349666492187400}
   - component: {fileID: 1484461861241563468}
   - component: {fileID: 7328171216046605976}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -808,7 +808,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -25}
+  m_AnchoredPosition: {x: 0, y: -30}
   m_SizeDelta: {x: 166.04999, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1926349666492187400
@@ -940,7 +940,7 @@ GameObject:
   - component: {fileID: 7018876897426621844}
   - component: {fileID: 2866876947486518679}
   - component: {fileID: 6053795298665032270}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

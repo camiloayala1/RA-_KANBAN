@@ -11,9 +11,10 @@ public class CardInteraction : MonoBehaviour
 
     private Transform selectedCard = null;
     private Transform originalParent = null;
+    private Transform canvasBoardRoot = null; // Raíz del Canvas del tablero
     private Plane dragPlane;
     private Vector3 offset;
-    private float liftDistance = 0.04f;
+    private float liftDistance = 0.05f;
 
     void Awake()
     {
@@ -45,10 +46,18 @@ public class CardInteraction : MonoBehaviour
                     selectedCard = hitTransform;
                     originalParent = selectedCard.parent;
 
-                    // Pasar la tarjeta al frente de su contenedor para que no la tape nada
-                    selectedCard.SetAsLastSibling();
+                    // Encontrar el Canvas raíz del tablero para sacarlo de la columna mientras se arrastra
+                    Canvas parentCanvas = selectedCard.GetComponentInParent<Canvas>();
+                    if (parentCanvas != null)
+                    {
+                        canvasBoardRoot = parentCanvas.transform;
+                        // Emparentar a la raíz del Canvas manteniendo posición en el mundo
+                        selectedCard.SetParent(canvasBoardRoot, true);
+                        // Mandar al fondo de la jerarquía para que se dibuje ENCIMA de todas las columnas
+                        selectedCard.SetAsLastSibling();
+                    }
 
-                    // Separarla físicamente hacia la cámara
+                    // Despegar hacia la cámara para que físicamente quede por delante
                     selectedCard.position -= arCamera.transform.forward * liftDistance;
 
                     dragPlane = new Plane(-arCamera.transform.forward, selectedCard.position);
@@ -79,7 +88,7 @@ public class CardInteraction : MonoBehaviour
 
     private void DropCard(Vector2 screenPosition)
     {
-        // 1. Destruir si cae en papelera
+        // Si se soltó sobre la papelera en pantalla
         if (trashZone != null && RectTransformUtility.RectangleContainsScreenPoint(trashZone, screenPosition))
         {
             Destroy(selectedCard.gameObject);
@@ -87,7 +96,7 @@ public class CardInteraction : MonoBehaviour
             return;
         }
 
-        // 2. Identificar la columna de destino
+        // Buscar sobre qué columna se soltó mediante Physics Raycast
         Ray ray = arCamera.ScreenPointToRay(screenPosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
 
@@ -102,25 +111,20 @@ public class CardInteraction : MonoBehaviour
             }
         }
 
-        if (targetColumn != null)
-        {
-            selectedCard.SetParent(targetColumn, false);
-        }
-        else
-        {
-            selectedCard.SetParent(originalParent, false);
-        }
+        // Si soltó sobre una columna válida, la asignamos; si no, vuelve a la original
+        Transform finalParent = (targetColumn != null) ? targetColumn : originalParent;
 
-        // Poner la tarjeta en primer plano dentro de la columna y asegurar Z negativa
+        selectedCard.SetParent(finalParent, true);
         selectedCard.SetAsLastSibling();
 
+        // Normalizar escala y posición local dentro de la columna asignada
         RectTransform rt = selectedCard.GetComponent<RectTransform>();
         if (rt != null)
         {
             rt.localScale = Vector3.one;
             rt.localRotation = Quaternion.identity;
             Vector3 pos = rt.localPosition;
-            pos.z = -15f; // Despegado hacia el frente para evitar solapamiento con el fondo
+            pos.z = -5f; // Despegado hacia adelante
             rt.localPosition = pos;
         }
 
