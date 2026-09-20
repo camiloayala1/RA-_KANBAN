@@ -11,7 +11,7 @@ public class CardInteraction : MonoBehaviour
 
     private Transform selectedCard = null;
     private Transform originalParent = null;
-    private Transform canvasBoardRoot = null; // Raíz del Canvas del tablero
+    private Transform canvasBoardRoot = null;
     private Plane dragPlane;
     private Vector3 offset;
     private float liftDistance = 0.05f;
@@ -46,18 +46,14 @@ public class CardInteraction : MonoBehaviour
                     selectedCard = hitTransform;
                     originalParent = selectedCard.parent;
 
-                    // Encontrar el Canvas raíz del tablero para sacarlo de la columna mientras se arrastra
                     Canvas parentCanvas = selectedCard.GetComponentInParent<Canvas>();
                     if (parentCanvas != null)
                     {
                         canvasBoardRoot = parentCanvas.transform;
-                        // Emparentar a la raíz del Canvas manteniendo posición en el mundo
                         selectedCard.SetParent(canvasBoardRoot, true);
-                        // Mandar al fondo de la jerarquía para que se dibuje ENCIMA de todas las columnas
                         selectedCard.SetAsLastSibling();
                     }
 
-                    // Despegar hacia la cámara para que físicamente quede por delante
                     selectedCard.position -= arCamera.transform.forward * liftDistance;
 
                     dragPlane = new Plane(-arCamera.transform.forward, selectedCard.position);
@@ -69,7 +65,7 @@ public class CardInteraction : MonoBehaviour
                 }
             }
         }
-        // 2. Arrastrar con el dedo
+        // 2. Arrastrar
         else if (touch.phase == TouchPhase.Moved && selectedCard != null)
         {
             Ray ray = arCamera.ScreenPointToRay(touch.position);
@@ -79,7 +75,7 @@ public class CardInteraction : MonoBehaviour
                 selectedCard.position = ray.GetPoint(enterDistance) + offset;
             }
         }
-        // 3. Soltar tarjeta
+        // 3. Soltar
         else if ((touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) && selectedCard != null)
         {
             DropCard(touch.position);
@@ -88,15 +84,22 @@ public class CardInteraction : MonoBehaviour
 
     private void DropCard(Vector2 screenPosition)
     {
-        // Si se soltó sobre la papelera en pantalla
+        // 1. Si cayó sobre la papelera: borrar de la escena y de Firebase
         if (trashZone != null && RectTransformUtility.RectangleContainsScreenPoint(trashZone, screenPosition))
         {
+            PostItItem postIt = selectedCard.GetComponent<PostItItem>();
+            if (postIt != null && FirebaseManager.TableroActivo != null && FirebaseManager.TableroActivo.notas != null)
+            {
+                FirebaseManager.TableroActivo.notas.RemoveAll(n => n.id == postIt.notaId);
+                FirebaseManager.Instance.GuardarTablero(FirebaseManager.TableroActivo, null);
+            }
+
             Destroy(selectedCard.gameObject);
             selectedCard = null;
             return;
         }
 
-        // Buscar sobre qué columna se soltó mediante Physics Raycast
+        // 2. Comprobar columna de destino
         Ray ray = arCamera.ScreenPointToRay(screenPosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
 
@@ -111,21 +114,36 @@ public class CardInteraction : MonoBehaviour
             }
         }
 
-        // Si soltó sobre una columna válida, la asignamos; si no, vuelve a la original
         Transform finalParent = (targetColumn != null) ? targetColumn : originalParent;
 
         selectedCard.SetParent(finalParent, true);
         selectedCard.SetAsLastSibling();
 
-        // Normalizar escala y posición local dentro de la columna asignada
         RectTransform rt = selectedCard.GetComponent<RectTransform>();
         if (rt != null)
         {
             rt.localScale = Vector3.one;
             rt.localRotation = Quaternion.identity;
             Vector3 pos = rt.localPosition;
-            pos.z = -5f; // Despegado hacia adelante
+            pos.z = -5f;
             rt.localPosition = pos;
+        }
+
+        // 3. Si cambió de columna, guardar el cambio en Firebase
+        PostItItem itemData = selectedCard.GetComponent<PostItItem>();
+        if (itemData != null && finalParent != originalParent && targetColumn != null)
+        {
+            itemData.columnaActual = finalParent.name;
+
+            if (FirebaseManager.TableroActivo != null && FirebaseManager.TableroActivo.notas != null)
+            {
+                var notaEncontrada = FirebaseManager.TableroActivo.notas.Find(n => n.id == itemData.notaId);
+                if (notaEncontrada != null)
+                {
+                    notaEncontrada.columna = finalParent.name;
+                    FirebaseManager.Instance.GuardarTablero(FirebaseManager.TableroActivo, null);
+                }
+            }
         }
 
         selectedCard = null;
