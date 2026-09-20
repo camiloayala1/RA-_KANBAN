@@ -10,14 +10,34 @@ public class FirebaseManager : MonoBehaviour
 
     public static TableroData TableroActivo = null;
 
-    // Reemplaza por la URL de tu base de datos copiada de Firebase Console (incluyendo la diagonal final)
-    private string databaseURL = "https://ra-kanban-app-default-rtdb.firebaseio.com/";
+    [Header("Configuración Firebase")]
+    [Tooltip("URL base de tu Realtime Database")]
+    public string databaseURL = "https://ra-kanban-app-default-rtdb.firebaseio.com/";
 
     void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-        DontDestroyOnLoad(gameObject);
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Genera la ruta aislada en Firebase para el usuario actual (/usuarios/{UID}/).
+    /// </summary>
+    private string ObtenerRutaUsuario()
+    {
+        string uid = "invitado";
+        if (FirebaseAuthREST.Instance != null && !string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentUserId))
+        {
+            uid = FirebaseAuthREST.Instance.CurrentUserId;
+        }
+        return $"{databaseURL}usuarios/{uid}/";
     }
 
     public void GuardarTablero(TableroData tablero, Action<bool> callback)
@@ -27,7 +47,7 @@ public class FirebaseManager : MonoBehaviour
 
     private IEnumerator RutinaGuardar(TableroData tablero, Action<bool> callback)
     {
-        string url = $"{databaseURL}tableros/{tablero.id}.json";
+        string url = $"{ObtenerRutaUsuario()}tableros/{tablero.id}.json";
         string jsonData = JsonUtility.ToJson(tablero);
 
         using (UnityWebRequest req = UnityWebRequest.Put(url, jsonData))
@@ -54,7 +74,7 @@ public class FirebaseManager : MonoBehaviour
 
     private IEnumerator RutinaObtenerTableros(Action<string> callback)
     {
-        string url = $"{databaseURL}tableros.json";
+        string url = $"{ObtenerRutaUsuario()}tableros.json";
 
         using (UnityWebRequest req = UnityWebRequest.Get(url))
         {

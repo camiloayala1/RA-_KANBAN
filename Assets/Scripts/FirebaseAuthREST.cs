@@ -4,12 +4,13 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 [Serializable]
-public class GoogleAuthResponse
+public class AuthResponse
 {
     public string idToken;
-    public string localId; // UID único del usuario
     public string email;
-    public string displayName;
+    public string refreshToken;
+    public string expiresIn;
+    public string localId; // UID único del usuario en Firebase
 }
 
 public class FirebaseAuthREST : MonoBehaviour
@@ -17,34 +18,58 @@ public class FirebaseAuthREST : MonoBehaviour
     public static FirebaseAuthREST Instance;
 
     [Header("Firebase Config")]
-    [Tooltip("Pega aquí la Web API Key de Configuración del Proyecto en Firebase")]
+    [Tooltip("Browser key de Google Cloud")]
     public string apiKey = "AIzaSyCDMnoaIRLsS8R24aB7p3LYMpotWQYpqyk";
 
     public string CurrentUserId { get; private set; }
-    public string CurrentIdToken { get; private set; }
-    public string CurrentUserName { get; private set; }
+    public string CurrentUserEmail { get; private set; }
 
     void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-        DontDestroyOnLoad(gameObject);
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     /// <summary>
-    /// Intercambia un ID Token de Google por credenciales de Firebase Auth.
+    /// Intenta iniciar sesión; si la cuenta no existe en Firebase, la crea automáticamente.
     /// </summary>
-    public void IniciarSesionConGoogleIdToken(string googleIdToken, Action<bool, string> callback)
+    public void IniciarOSuscribir(string email, string password, Action<bool, string> callback)
     {
-        StartCoroutine(RutinaLoginGoogle(googleIdToken, callback));
+        StartCoroutine(RutinaLogin(email, password, (exitoLogin, respLogin) =>
+        {
+            if (exitoLogin)
+            {
+                callback?.Invoke(true, CurrentUserEmail);
+            }
+            else
+            {
+                // Si la cuenta no existe, la crea de inmediato
+                StartCoroutine(RutinaRegistro(email, password, (exitoRegistro, respRegistro) =>
+                {
+                    if (exitoRegistro)
+                    {
+                        callback?.Invoke(true, CurrentUserEmail);
+                    }
+                    else
+                    {
+                        callback?.Invoke(false, respRegistro);
+                    }
+                }));
+            }
+        }));
     }
 
-    private IEnumerator RutinaLoginGoogle(string googleIdToken, Action<bool, string> callback)
+    private IEnumerator RutinaLogin(string email, string password, Action<bool, string> callback)
     {
-        string url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={apiKey}";
-
-        // Estructura requerida por Firebase Auth REST API
-        string payload = "{\"postBody\":\"id_token=" + googleIdToken + "&providerId=google.com\",\"requestUri\":\"http://localhost\",\"returnIdpCredential\":true,\"returnSecureToken\":true}";
+        string url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={apiKey}";
+        string payload = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"returnSecureToken\":true}";
 
         using (UnityWebRequest req = new UnityWebRequest(url, "POST"))
         {
@@ -57,27 +82,49 @@ public class FirebaseAuthREST : MonoBehaviour
 
             if (req.result == UnityWebRequest.Result.Success)
             {
-                GoogleAuthResponse resp = JsonUtility.FromJson<GoogleAuthResponse>(req.downloadHandler.text);
-                CurrentUserId = resp.localId;
-                CurrentIdToken = resp.idToken;
-                CurrentUserName = resp.displayName;
-
-                callback?.Invoke(true, resp.displayName);
+                AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
+                CurrentUserId = res.localId;
+                CurrentUserEmail = res.email;
+                callback?.Invoke(true, CurrentUserId);
             }
             else
             {
-                Debug.LogError("Error en Firebase Auth: " + req.downloadHandler.text);
-                callback?.Invoke(false, req.error);
+                callback?.Invoke(false, req.downloadHandler.text);
             }
         }
     }
 
-    /// <summary>
-    /// Modo de simulación rápida en editor (para probar la separación de usuarios sin compilar APK cada vez).
-    /// </summary>
-    public void IniciarSesionSimulada(string customUserId, string nombreVisible)
+    private IEnumerator RutinaRegistro(string email, string password, Action<bool, string> callback)
     {
-        CurrentUserId = customUserId;
-        CurrentUserName = nombreVisible;
+        string url = $"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={apiKey}";
+        string payload = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"returnSecureToken\":true}";
+
+        using (UnityWebRequest req = new UnityWebRequest(url, "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(payload);
+            req.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
+                CurrentUserId = res.localId;
+                CurrentUserEmail = res.email;
+                callback?.Invoke(true, CurrentUserId);
+            }
+            else
+            {
+                callback?.Invoke(false, req.downloadHandler.text);
+            }
+        }
+    }
+
+    public void CerrarSesion()
+    {
+        CurrentUserId = "";
+        CurrentUserEmail = "";
     }
 }

@@ -570,7 +570,7 @@ GameObject:
   - component: {fileID: 722035370}
   - component: {fileID: 722035369}
   m_Layer: 5
-  m_Name: Fondo
+  m_Name: Panel_LoginGoogle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

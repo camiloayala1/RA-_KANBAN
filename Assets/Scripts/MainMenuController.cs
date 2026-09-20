@@ -10,7 +10,14 @@ public class MainMenuController : MonoBehaviour
     [Header("UI Paneles")]
     public GameObject modalCrear;
     public TMP_InputField inputNombre;
-    public TextMeshProUGUI textoEstado;
+    public TextMeshProUGUI textoEstado; // Muestra "Cargando tableros...", etc.
+
+    [Header("Panel Login y Usuario")]
+    public GameObject panelLogin;
+    public TMP_InputField inputCorreo;
+    public TMP_InputField inputPassword;
+    public TextMeshProUGUI textoErrorLogin;       // Mensajes rojos dentro del panel de login
+    public TextMeshProUGUI textoUsuarioConectado; // Muestra el correo arriba del menú
 
     [Header("Lista ScrollView")]
     public Transform contentLista; // Objeto 'Content' del ScrollView
@@ -18,7 +25,124 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
-        CargarListaTableros();
+        VerificarSesionUsuario();
+    }
+
+    public void VerificarSesionUsuario()
+    {
+        if (FirebaseAuthREST.Instance == null || string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentUserId))
+        {
+            if (panelLogin != null) panelLogin.SetActive(true);
+            if (textoUsuarioConectado != null) textoUsuarioConectado.text = "Inicia sesión";
+            if (textoErrorLogin != null) textoErrorLogin.text = "";
+        }
+        else
+        {
+            if (panelLogin != null) panelLogin.SetActive(false);
+            if (textoUsuarioConectado != null) 
+                textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+
+            CargarListaTableros();
+        }
+    }
+
+    /// <summary>
+    /// Conectar al evento On Click del botón Ingresar_btn en el Login
+    /// </summary>
+    public void BotonIniciarSesion()
+    {
+        if (textoErrorLogin != null) textoErrorLogin.text = "";
+
+        string correo = inputCorreo != null ? inputCorreo.text.Trim() : "";
+        string pass = inputPassword != null ? inputPassword.text.Trim() : "";
+
+        if (string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(pass))
+        {
+            MostrarErrorLogin("Ingresa tu correo y contraseña.");
+            return;
+        }
+
+        if (pass.Length < 6)
+        {
+            MostrarErrorLogin("La contraseña debe tener mínimo 6 caracteres.");
+            return;
+        }
+
+        if (FirebaseAuthREST.Instance == null)
+        {
+            MostrarErrorLogin("Error: Falta componente FirebaseAuthREST en FirebaseManager.");
+            return;
+        }
+
+        MostrarErrorLogin("Conectando con Firebase...");
+
+        FirebaseAuthREST.Instance.IniciarOSuscribir(correo, pass, (exito, respuesta) =>
+        {
+            if (exito)
+            {
+                if (textoErrorLogin != null) textoErrorLogin.text = "";
+                if (panelLogin != null) panelLogin.SetActive(false);
+                
+                // Muestra el correo conectado en la interfaz principal
+                if (textoUsuarioConectado != null) 
+                    textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+
+                CargarListaTableros();
+            }
+            else
+            {
+                // Traducir respuestas comunes de Firebase Auth REST
+                string mensajeTraducido = TraducirErrorFirebase(respuesta);
+                MostrarErrorLogin(mensajeTraducido);
+            }
+        });
+    }
+
+    private void MostrarErrorLogin(string mensaje)
+    {
+        if (textoErrorLogin != null)
+        {
+            textoErrorLogin.text = mensaje;
+        }
+        else if (textoEstado != null)
+        {
+            textoEstado.text = mensaje;
+        }
+    }
+
+    private string TraducirErrorFirebase(string jsonOError)
+    {
+        if (string.IsNullOrEmpty(jsonOError)) return "Error de conexión.";
+
+        if (jsonOError.Contains("INVALID_PASSWORD") || jsonOError.Contains("INVALID_LOGIN_CREDENTIALS"))
+            return "Contraseña incorrecta.";
+        if (jsonOError.Contains("EMAIL_NOT_FOUND"))
+            return "El correo no está registrado.";
+        if (jsonOError.Contains("INVALID_EMAIL"))
+            return "Formato de correo no válido.";
+        if (jsonOError.Contains("EMAIL_EXISTS"))
+            return "Credenciales incorrectas.";
+        if (jsonOError.Contains("WEAK_PASSWORD"))
+            return "Contraseña demasiado débil (mínimo 6 caracteres).";
+        if (jsonOError.Contains("TOO_MANY_ATTEMPTS_TRY_LATER"))
+            return "Demasiados intentos. Intenta más tarde.";
+
+        return "Error al autenticar. Revisa tus datos.";
+    }
+
+    public void CerrarSesion()
+    {
+        if (FirebaseAuthREST.Instance != null)
+        {
+            FirebaseAuthREST.Instance.CerrarSesion();
+        }
+
+        foreach (Transform child in contentLista)
+        {
+            Destroy(child.gameObject);
+        }
+
+        VerificarSesionUsuario();
     }
 
     public void AbrirModalCrear()
@@ -63,13 +187,12 @@ public class MainMenuController : MonoBehaviour
 
     public void CargarListaTableros()
     {
-        // Limpiar botones anteriores
         foreach (Transform child in contentLista)
         {
             Destroy(child.gameObject);
         }
 
-        if (textoEstado != null) textoEstado.text = "Cargando tableros desde Firebase...";
+        if (textoEstado != null) textoEstado.text = "Cargando tableros...";
 
         FirebaseManager.Instance.ObtenerTableros((json) =>
         {
@@ -85,25 +208,21 @@ public class MainMenuController : MonoBehaviour
 
             if (lista.Count == 0)
             {
-                if (textoEstado != null) textoEstado.text = "No se pudieron procesar los tableros.";
+                if (textoEstado != null) textoEstado.text = "No se encontraron tableros.";
                 return;
             }
 
             foreach (var t in lista)
             {
                 GameObject nuevoBoton = Instantiate(itemTableroPrefab, contentLista);
-                
-                // Asegurar escala normal en el ScrollView
                 nuevoBoton.transform.localScale = Vector3.one;
 
-                // Asignar texto del botón
                 TextMeshProUGUI tmp = nuevoBoton.GetComponentInChildren<TextMeshProUGUI>();
                 if (tmp != null)
                 {
                     tmp.text = t.nombre;
                 }
 
-                // Asignar evento al hacer clic
                 TableroData tableroSeleccionado = t;
                 Button btn = nuevoBoton.GetComponent<Button>();
                 if (btn != null)
@@ -118,27 +237,20 @@ public class MainMenuController : MonoBehaviour
         });
     }
 
-    /// <summary>
-    /// Extrae cada objeto {"id":..., "nombre":...} del mapa general devuelto por Firebase
-    /// sin que JsonUtility falle por las llaves dinámicas.
-    /// </summary>
     private List<TableroData> ExtraerTablerosDeJson(string json)
     {
         List<TableroData> resultado = new List<TableroData>();
 
         try
         {
-            // Busca cada aparición del campo "id" dentro del JSON
             string marcador = "\"id\"";
             int indiceActual = 0;
 
             while ((indiceActual = json.IndexOf(marcador, indiceActual)) != -1)
             {
-                // Encontrar el inicio de la llave '{' que contiene este id
                 int inicioObjeto = json.LastIndexOf('{', indiceActual);
                 if (inicioObjeto != -1)
                 {
-                    // Encontrar el cierre de llave '}' correspondiente al objeto del tablero
                     int balanceLlaves = 0;
                     int finObjeto = -1;
 
@@ -160,7 +272,6 @@ public class MainMenuController : MonoBehaviour
                     {
                         string jsonObjeto = json.Substring(inicioObjeto, (finObjeto - inicioObjeto) + 1);
 
-                        // Limpiar posibles notas para instanciar la cabecera básica del botón de forma limpia
                         TableroData t = JsonUtility.FromJson<TableroData>(jsonObjeto);
                         if (t != null && !string.IsNullOrEmpty(t.id))
                         {
