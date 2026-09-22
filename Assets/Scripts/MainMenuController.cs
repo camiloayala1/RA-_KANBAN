@@ -39,7 +39,7 @@ public class MainMenuController : MonoBehaviour
         else
         {
             if (panelLogin != null) panelLogin.SetActive(false);
-            if (textoUsuarioConectado != null) 
+            if (textoUsuarioConectado != null)
                 textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
 
             CargarListaTableros();
@@ -82,9 +82,9 @@ public class MainMenuController : MonoBehaviour
             {
                 if (textoErrorLogin != null) textoErrorLogin.text = "";
                 if (panelLogin != null) panelLogin.SetActive(false);
-                
+
                 // Muestra el correo conectado en la interfaz principal
-                if (textoUsuarioConectado != null) 
+                if (textoUsuarioConectado != null)
                     textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
 
                 CargarListaTableros();
@@ -137,11 +137,21 @@ public class MainMenuController : MonoBehaviour
             FirebaseAuthREST.Instance.CerrarSesion();
         }
 
-        foreach (Transform child in contentLista)
+        // 1. Limpiar los campos de texto del login
+        if (inputCorreo != null) inputCorreo.text = "";
+        if (inputPassword != null) inputPassword.text = "";
+        if (textoErrorLogin != null) textoErrorLogin.text = "";
+
+        // 2. Limpiar la lista visual de tableros
+        if (contentLista != null)
         {
-            Destroy(child.gameObject);
+            foreach (Transform child in contentLista)
+            {
+                Destroy(child.gameObject);
+            }
         }
 
+        // 3. Volver a mostrar el panel de login
         VerificarSesionUsuario();
     }
 

@@ -24,17 +24,44 @@ public class FirebaseAuthREST : MonoBehaviour
     public string CurrentUserId { get; private set; }
     public string CurrentUserEmail { get; private set; }
 
+    private const string PREF_UID_KEY = "FB_USER_UID";
+    private const string PREF_EMAIL_KEY = "FB_USER_EMAIL";
+
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            CargarSesionGuardada();
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// Recupera la sesión anterior si el usuario no cerró sesión manualmente.
+    /// </summary>
+    private void CargarSesionGuardada()
+    {
+        if (PlayerPrefs.HasKey(PREF_UID_KEY))
+        {
+            CurrentUserId = PlayerPrefs.GetString(PREF_UID_KEY);
+            CurrentUserEmail = PlayerPrefs.GetString(PREF_EMAIL_KEY, "");
+            Debug.Log($"[FirebaseAuthREST] Sesión recuperada para: {CurrentUserEmail} ({CurrentUserId})");
+        }
+    }
+
+    private void GuardarSesion(string uid, string email)
+    {
+        CurrentUserId = uid;
+        CurrentUserEmail = email;
+
+        PlayerPrefs.SetString(PREF_UID_KEY, uid);
+        PlayerPrefs.SetString(PREF_EMAIL_KEY, email);
+        PlayerPrefs.Save();
     }
 
     /// <summary>
@@ -50,7 +77,7 @@ public class FirebaseAuthREST : MonoBehaviour
             }
             else
             {
-                // Si la cuenta no existe, la crea de inmediato
+                // Si falla el login (por ejemplo cuenta nueva), intenta el registro
                 StartCoroutine(RutinaRegistro(email, password, (exitoRegistro, respRegistro) =>
                 {
                     if (exitoRegistro)
@@ -83,8 +110,7 @@ public class FirebaseAuthREST : MonoBehaviour
             if (req.result == UnityWebRequest.Result.Success)
             {
                 AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
-                CurrentUserId = res.localId;
-                CurrentUserEmail = res.email;
+                GuardarSesion(res.localId, res.email);
                 callback?.Invoke(true, CurrentUserId);
             }
             else
@@ -111,8 +137,7 @@ public class FirebaseAuthREST : MonoBehaviour
             if (req.result == UnityWebRequest.Result.Success)
             {
                 AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
-                CurrentUserId = res.localId;
-                CurrentUserEmail = res.email;
+                GuardarSesion(res.localId, res.email);
                 callback?.Invoke(true, CurrentUserId);
             }
             else
@@ -126,5 +151,11 @@ public class FirebaseAuthREST : MonoBehaviour
     {
         CurrentUserId = "";
         CurrentUserEmail = "";
+
+        PlayerPrefs.DeleteKey(PREF_UID_KEY);
+        PlayerPrefs.DeleteKey(PREF_EMAIL_KEY);
+        PlayerPrefs.Save();
+
+        Debug.Log("[FirebaseAuthREST] Sesión cerrada y eliminada de PlayerPrefs.");
     }
 }
