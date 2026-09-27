@@ -2020,6 +2020,7 @@ GameObject:
   - component: {fileID: 1589187742}
   - component: {fileID: 1589187746}
   - component: {fileID: 1589187747}
+  - component: {fileID: 1589187748}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -2103,6 +2104,9 @@ MonoBehaviour:
   placementReticle: {fileID: 2751355783394894597}
   panelInstrucciones: {fileID: 2016370122}
   textoInstrucciones: {fileID: 1224206314}
+  permitirParedes: 1
+  permitirSuelo: 0
+  usarSoloPlanosEstables: 1
 --- !u!114 &1589187747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2116,6 +2120,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AnchorPrefab: {fileID: 0}
+--- !u!114 &1589187748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1589187741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ab0e80cee9cc1d44928bfe488dd1e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PointCloudPrefab: {fileID: 6906778926646275334, guid: e4d33107b5c549246940828c3f8839c3, type: 3}
 --- !u!1 &1828601335
 GameObject:
   m_ObjectHideFlags: 0
