@@ -18,6 +18,7 @@ public class BoardPlacementManager : MonoBehaviour
     private ARRaycastManager raycastManager;
     private ARPlaneManager planeManager;
     private ARAnchorManager anchorManager;
+    private ARPointCloudManager pointCloudManager; // Control de la nube de puntos
 
     private GameObject spawnedBoard = null;
     private ARAnchor currentAnchor = null;
@@ -29,6 +30,7 @@ public class BoardPlacementManager : MonoBehaviour
         raycastManager = GetComponent<ARRaycastManager>();
         planeManager = GetComponent<ARPlaneManager>();
         anchorManager = GetComponent<ARAnchorManager>();
+        pointCloudManager = GetComponent<ARPointCloudManager>();
     }
 
     void Start()
@@ -145,6 +147,16 @@ public class BoardPlacementManager : MonoBehaviour
                     p.gameObject.SetActive(false);
                 }
 
+                // Ocultar nube de puntos para dejar limpia la vista del tablero
+                if (pointCloudManager != null)
+                {
+                    pointCloudManager.enabled = false;
+                    foreach (var pointCloud in pointCloudManager.trackables)
+                    {
+                        pointCloud.gameObject.SetActive(false);
+                    }
+                }
+
                 // Ocultar mensaje de ayuda
                 if (panelInstrucciones != null)
                 {
@@ -196,6 +208,16 @@ public class BoardPlacementManager : MonoBehaviour
         foreach (var p in planeManager.trackables)
         {
             p.gameObject.SetActive(true);
+        }
+
+        // Reactivar nube de puntos al reubicar
+        if (pointCloudManager != null)
+        {
+            pointCloudManager.enabled = true;
+            foreach (var pointCloud in pointCloudManager.trackables)
+            {
+                pointCloud.gameObject.SetActive(true);
+            }
         }
 
         placementReticle.SetActive(false);
