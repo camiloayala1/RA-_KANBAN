@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using TMPro;
@@ -14,6 +15,10 @@ public class BoardPlacementManager : MonoBehaviour
     [Header("UI de instrucciones")]
     [SerializeField] private GameObject panelInstrucciones;
     [SerializeField] private TMP_Text textoInstrucciones;
+
+    [Header("UI de acciones (Botones del tablero)")]
+    [Tooltip("Panel que agrupa Btn_NuevaNota, Papelera y Btn_Reubicar")]
+    [SerializeField] private GameObject panelBotonesAccion;
 
     [Header("Superficies permitidas")]
     [SerializeField] private bool permitirParedes = true;
@@ -115,6 +120,10 @@ public class BoardPlacementManager : MonoBehaviour
         if (placementReticle != null)
             placementReticle.SetActive(false);
 
+        // Los botones de nueva nota, papelera y reubicar inician apagados
+        if (panelBotonesAccion != null)
+            panelBotonesAccion.SetActive(false);
+
         MostrarMensaje(
             "Mueve el celular para detectar una pared o superficie."
         );
@@ -151,12 +160,6 @@ public class BoardPlacementManager : MonoBehaviour
     private void OnPlanesChanged(
         ARPlanesChangedEventArgs args)
     {
-        // Cuando el tablero está colocado,
-        // solamente ocultamos la representación visual.
-        //
-        // Los planos siguen existiendo internamente.
-        // Esto es importante para poder reubicar rápidamente.
-
         if (!boardPlaced)
             return;
 
@@ -434,10 +437,6 @@ public class BoardPlacementManager : MonoBehaviour
                 arCamera.transform.position -
                 posicion;
 
-            /*
-             * Comprobamos hacia qué lado apunta
-             * la normal de la pared.
-             */
             if (Vector3.Dot(
                     normalPared,
                     haciaCamara) < 0f)
@@ -445,12 +444,6 @@ public class BoardPlacementManager : MonoBehaviour
                 normalPared = -normalPared;
             }
 
-            /*
-             * El frente del tablero mira hacia
-             * el usuario.
-             *
-             * Vector3.up mantiene el tablero vertical.
-             */
             Quaternion rotacion =
                 Quaternion.LookRotation(
                     -normalPared,
@@ -533,40 +526,50 @@ public class BoardPlacementManager : MonoBehaviour
 
     private void ProcesarToque()
     {
-        if (Input.touchCount <= 0)
-            return;
-
-        Touch touch = Input.GetTouch(0);
-
-        if (touch.phase != TouchPhase.Began)
-            return;
-
-        // No colocar si el usuario está tocando
-        // un botón o elemento de la interfaz.
-        if (EventSystem.current != null)
+        // 1. Toque en Celular (Android)
+        if (Input.touchCount > 0)
         {
-            if (EventSystem.current.IsPointerOverGameObject(
-                touch.fingerId))
+            Touch touch = Input.GetTouch(0);
+
+            if (touch.phase == TouchPhase.Began)
             {
+                if (EventSystem.current != null)
+                {
+                    if (EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                    {
+                        return;
+                    }
+                }
+
+                if (currentPlane == null)
+                    return;
+
+                if (usarSoloPlanosEstables)
+                {
+                    if (currentPlane.trackingState != TrackingState.Tracking)
+                    {
+                        return;
+                    }
+                }
+
+                ColocarTablero();
                 return;
             }
         }
 
-        // Comprobar que todavía tenemos un plano.
-        if (currentPlane == null)
-            return;
-
-        // Comprobar tracking.
-        if (usarSoloPlanosEstables)
+        // 2. Clic en Editor de Unity
+        #if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0))
         {
-            if (currentPlane.trackingState !=
-                TrackingState.Tracking)
-            {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
-            }
-        }
 
-        ColocarTablero();
+            if (currentPlane == null)
+                return;
+
+            ColocarTablero();
+        }
+        #endif
     }
 
     // ---------------------------------------------------------
@@ -612,58 +615,24 @@ public class BoardPlacementManager : MonoBehaviour
 
         if (currentAnchor != null)
         {
-            /*
-             * MUY IMPORTANTE:
-             *
-             * No utilizamos Vector3.one.
-             *
-             * Tu prefab tiene:
-             *
-             * Scale X = 0.001
-             * Scale Y = 0.001
-             * Scale Z = 0.001
-             *
-             * Esa escala se conserva.
-             */
-
             spawnedBoard = Instantiate(
                 boardPrefab,
                 currentAnchor.transform
             );
 
-            // Posición relativa al Anchor.
             spawnedBoard.transform.localPosition =
                 Vector3.zero;
 
-            // Rotación relativa al Anchor.
             spawnedBoard.transform.localRotation =
                 Quaternion.identity;
-
-            /*
-             * NO TOCAR localScale.
-             *
-             * Se conserva la escala original
-             * del prefab.
-             */
         }
         else
         {
-            /*
-             * Fallback:
-             * si ARCore no puede crear un Anchor,
-             * colocamos directamente en la pose detectada.
-             */
-
             spawnedBoard = Instantiate(
                 boardPrefab,
                 poseFinal.position,
                 poseFinal.rotation
             );
-
-            /*
-             * NO modificar la escala.
-             * El prefab ya tiene la escala correcta.
-             */
 
             Debug.LogWarning(
                 "No se pudo crear ARAnchor. " +
@@ -691,7 +660,7 @@ public class BoardPlacementManager : MonoBehaviour
         isDetecting = false;
 
         // -----------------------------------------------------
-        // LIMPIAR INTERFAZ
+        // LIMPIAR INTERFAZ Y MOSTRAR BOTONES DE ACCIÓN
         // -----------------------------------------------------
 
         OcultarReticula();
@@ -701,16 +670,17 @@ public class BoardPlacementManager : MonoBehaviour
             panelInstrucciones.SetActive(false);
         }
 
+        // ACTIVAR BOTONES (Nueva Nota, Papelera, Reubicar)
+        if (panelBotonesAccion != null)
+        {
+            panelBotonesAccion.SetActive(true);
+        }
+
         // -----------------------------------------------------
-        // OCULTAR PLANOS
+        // OCULTAR PLANOS Y NUBE DE PUNTOS
         // -----------------------------------------------------
 
         OcultarTodosLosPlanos();
-
-        // -----------------------------------------------------
-        // OCULTAR NUBE DE PUNTOS
-        // -----------------------------------------------------
-
         OcultarNubeDePuntos();
     }
 
@@ -741,13 +711,9 @@ public class BoardPlacementManager : MonoBehaviour
         if (pointCloudManager == null)
             return;
 
-        /*
-         * Desactivamos solamente la representación.
-         */
         pointCloudManager.enabled = false;
 
-        foreach (ARPointCloud cloud
-                 in pointCloudManager.trackables)
+        foreach (ARPointCloud cloud in pointCloudManager.trackables)
         {
             if (cloud != null)
             {
@@ -767,8 +733,7 @@ public class BoardPlacementManager : MonoBehaviour
 
         pointCloudManager.enabled = true;
 
-        foreach (ARPointCloud cloud
-                 in pointCloudManager.trackables)
+        foreach (ARPointCloud cloud in pointCloudManager.trackables)
         {
             if (cloud != null)
             {
@@ -786,13 +751,6 @@ public class BoardPlacementManager : MonoBehaviour
         if (planeManager == null)
             return;
 
-        /*
-         * No reiniciamos ARPlaneManager.
-         *
-         * Simplemente mostramos nuevamente
-         * los planos que ya existen.
-         */
-
         foreach (ARPlane plane in planeManager.trackables)
         {
             if (plane != null)
@@ -808,10 +766,6 @@ public class BoardPlacementManager : MonoBehaviour
 
     private void MostrarMensaje(string mensaje)
     {
-        /*
-         * Evita actualizar el TMP cientos de veces
-         * con exactamente el mismo texto.
-         */
         if (ultimoMensaje == mensaje)
             return;
 
@@ -835,18 +789,15 @@ public class BoardPlacementManager : MonoBehaviour
 
     public void ResetPlacement()
     {
-        // -----------------------------------------------------
-        // REACTIVAR DETECCIÓN
-        // -----------------------------------------------------
-
         boardPlaced = false;
         isDetecting = true;
-
         currentPlane = null;
 
-        // -----------------------------------------------------
-        // ELIMINAR TABLERO
-        // -----------------------------------------------------
+        // OCULTAR LOS BOTONES DE ACCIÓN HASTA VOLVER A FIJAR EL TABLERO
+        if (panelBotonesAccion != null)
+        {
+            panelBotonesAccion.SetActive(false);
+        }
 
         if (spawnedBoard != null)
         {
@@ -854,34 +805,14 @@ public class BoardPlacementManager : MonoBehaviour
             spawnedBoard = null;
         }
 
-        // -----------------------------------------------------
-        // ELIMINAR ANCHOR
-        // -----------------------------------------------------
-
         if (currentAnchor != null)
         {
             Destroy(currentAnchor.gameObject);
             currentAnchor = null;
         }
 
-        /*
-         * IMPORTANTE:
-         *
-         * NO hacemos:
-         *
-         * planeManager.enabled = false;
-         * planeManager.enabled = true;
-         *
-         * Tampoco destruimos los ARPlanes.
-         *
-         * Por eso los planos previamente detectados
-         * permanecen disponibles.
-         */
-
         MostrarPlanosExistentes();
-
         MostrarNubeDePuntos();
-
         OcultarReticula();
 
         if (panelInstrucciones != null)
@@ -892,5 +823,14 @@ public class BoardPlacementManager : MonoBehaviour
         MostrarMensaje(
             "Selecciona una superficie para reubicar el tablero."
         );
+    }
+
+    // ---------------------------------------------------------
+    // REGRESAR AL MENÚ PRINCIPAL
+    // ---------------------------------------------------------
+
+    public void RegresarAlMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
 }
