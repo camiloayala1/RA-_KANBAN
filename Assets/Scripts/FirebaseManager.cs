@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -88,6 +89,85 @@ public class FirebaseManager : MonoBehaviour
             {
                 Debug.LogError("Error al obtener tableros: " + req.error);
                 callback?.Invoke(null);
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Actualiza únicamente el título de un tablero en Firebase.
+    /// </summary>
+    public IEnumerator ActualizarNombreTablero(string tableroId, string nuevoTitulo, System.Action<bool> onComplete)
+    {
+        string token = PlayerPrefs.GetString("fb_token", "");
+        string uid = PlayerPrefs.GetString("fb_uid", "");
+
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(uid))
+        {
+            Debug.LogError("FirebaseManager: Sesión no válida para actualizar.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        string url = $"{databaseURL}/usuarios/{uid}/tableros/{tableroId}/titulo.json?auth={token}";
+        
+        // Serializamos el string como JSON válido
+        string jsonBody = $"\"{nuevoTitulo}\"";
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+
+        using (UnityWebRequest request = new UnityWebRequest(url, "PUT"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log($"Tablero {tableroId} actualizado exitosamente.");
+                onComplete?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogError($"Error al actualizar tablero: {request.error} | {request.downloadHandler.text}");
+                onComplete?.Invoke(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Elimina el nodo completo de un tablero en Firebase.
+    /// </summary>
+    public IEnumerator EliminarTablero(string tableroId, System.Action<bool> onComplete)
+    {
+        string token = PlayerPrefs.GetString("fb_token", "");
+        string uid = PlayerPrefs.GetString("fb_uid", "");
+
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(uid))
+        {
+            Debug.LogError("FirebaseManager: Sesión no válida para eliminar.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        string url = $"{databaseURL}/usuarios/{uid}/tableros/{tableroId}.json?auth={token}";
+
+        using (UnityWebRequest request = UnityWebRequest.Delete(url))
+        {
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log($"Tablero {tableroId} eliminado de la base de datos.");
+                onComplete?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogError($"Error al eliminar tablero: {request.error} | {request.downloadHandler.text}");
+                onComplete?.Invoke(false);
             }
         }
     }
