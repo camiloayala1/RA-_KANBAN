@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using UnityEngine;
@@ -23,9 +24,11 @@ public class FirebaseAuthREST : MonoBehaviour
 
     public string CurrentUserId { get; private set; }
     public string CurrentUserEmail { get; private set; }
+    public string CurrentToken { get; private set; } // <--- Token activo en memoria
 
     private const string PREF_UID_KEY = "FB_USER_UID";
     private const string PREF_EMAIL_KEY = "FB_USER_EMAIL";
+    private const string PREF_TOKEN_KEY = "FB_USER_TOKEN";
 
     void Awake()
     {
@@ -50,17 +53,20 @@ public class FirebaseAuthREST : MonoBehaviour
         {
             CurrentUserId = PlayerPrefs.GetString(PREF_UID_KEY);
             CurrentUserEmail = PlayerPrefs.GetString(PREF_EMAIL_KEY, "");
+            CurrentToken = PlayerPrefs.GetString(PREF_TOKEN_KEY, "");
             Debug.Log($"[FirebaseAuthREST] Sesión recuperada para: {CurrentUserEmail} ({CurrentUserId})");
         }
     }
 
-    private void GuardarSesion(string uid, string email)
+    private void GuardarSesion(string uid, string email, string token)
     {
         CurrentUserId = uid;
         CurrentUserEmail = email;
+        CurrentToken = token;
 
         PlayerPrefs.SetString(PREF_UID_KEY, uid);
         PlayerPrefs.SetString(PREF_EMAIL_KEY, email);
+        PlayerPrefs.SetString(PREF_TOKEN_KEY, token);
         PlayerPrefs.Save();
     }
 
@@ -110,7 +116,7 @@ public class FirebaseAuthREST : MonoBehaviour
             if (req.result == UnityWebRequest.Result.Success)
             {
                 AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
-                GuardarSesion(res.localId, res.email);
+                GuardarSesion(res.localId, res.email, res.idToken);
                 callback?.Invoke(true, CurrentUserId);
             }
             else
@@ -137,7 +143,7 @@ public class FirebaseAuthREST : MonoBehaviour
             if (req.result == UnityWebRequest.Result.Success)
             {
                 AuthResponse res = JsonUtility.FromJson<AuthResponse>(req.downloadHandler.text);
-                GuardarSesion(res.localId, res.email);
+                GuardarSesion(res.localId, res.email, res.idToken);
                 callback?.Invoke(true, CurrentUserId);
             }
             else
@@ -151,9 +157,11 @@ public class FirebaseAuthREST : MonoBehaviour
     {
         CurrentUserId = "";
         CurrentUserEmail = "";
+        CurrentToken = "";
 
         PlayerPrefs.DeleteKey(PREF_UID_KEY);
         PlayerPrefs.DeleteKey(PREF_EMAIL_KEY);
+        PlayerPrefs.DeleteKey(PREF_TOKEN_KEY);
         PlayerPrefs.Save();
 
         Debug.Log("[FirebaseAuthREST] Sesión cerrada y eliminada de PlayerPrefs.");

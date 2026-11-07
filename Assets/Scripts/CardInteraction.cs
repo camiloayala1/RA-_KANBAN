@@ -16,6 +16,9 @@ public class CardInteraction : MonoBehaviour
     private Vector3 offset;
     private float liftDistance = 0.05f;
 
+    // Estado para controlar cuándo la nota entra o sale del área de la papelera
+    private bool estaSobrePapelera = false;
+
     void Awake()
     {
         if (arCamera == null)
@@ -45,6 +48,7 @@ public class CardInteraction : MonoBehaviour
                 {
                     selectedCard = hitTransform;
                     originalParent = selectedCard.parent;
+                    estaSobrePapelera = false;
 
                     Canvas parentCanvas = selectedCard.GetComponentInParent<Canvas>();
                     if (parentCanvas != null)
@@ -74,17 +78,44 @@ public class CardInteraction : MonoBehaviour
             {
                 selectedCard.position = ray.GetPoint(enterDistance) + offset;
             }
+
+            // Comprobar continuamente si el dedo/nota está encima del icono de la papelera
+            VerificarHoverPapelera(touch.position);
         }
         // 3. Soltar
         else if ((touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) && selectedCard != null)
         {
+            // Apaga el estado visual de hover si estaba activo
+            if (estaSobrePapelera && TrashDropZone.Instance != null)
+            {
+                TrashDropZone.Instance.SobrePapelera(false);
+            }
+
             DropCard(touch.position);
+            estaSobrePapelera = false;
+        }
+    }
+
+    private void VerificarHoverPapelera(Vector2 screenPosition)
+    {
+        if (trashZone == null) return;
+
+        bool adentro = RectTransformUtility.RectangleContainsScreenPoint(trashZone, screenPosition);
+
+        // Solo notificar a la papelera cuando haya un cambio de estado
+        if (adentro != estaSobrePapelera)
+        {
+            estaSobrePapelera = adentro;
+            if (TrashDropZone.Instance != null)
+            {
+                TrashDropZone.Instance.SobrePapelera(estaSobrePapelera);
+            }
         }
     }
 
     private void DropCard(Vector2 screenPosition)
     {
-        // 1. Si cayó sobre la papelera: borrar de la escena y de Firebase
+        // 1. Si cayó sobre la papelera: borrado, destello, mensaje y guardado en Firebase
         if (trashZone != null && RectTransformUtility.RectangleContainsScreenPoint(trashZone, screenPosition))
         {
             PostItItem postIt = selectedCard.GetComponent<PostItItem>();
@@ -92,6 +123,12 @@ public class CardInteraction : MonoBehaviour
             {
                 FirebaseManager.TableroActivo.notas.RemoveAll(n => n.id == postIt.notaId);
                 FirebaseManager.Instance.GuardarTablero(FirebaseManager.TableroActivo, null);
+            }
+
+            // Dispara el efecto del círculo rojo y muestra "La nota se borró correctamente"
+            if (TrashDropZone.Instance != null)
+            {
+                TrashDropZone.Instance.ConfirmarEliminacionNota();
             }
 
             Destroy(selectedCard.gameObject);

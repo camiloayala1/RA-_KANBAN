@@ -38,7 +38,16 @@ public class FirebaseManager : MonoBehaviour
         {
             uid = FirebaseAuthREST.Instance.CurrentUserId;
         }
-        return $"{databaseURL}usuarios/{uid}/";
+        return $"{databaseURL.TrimEnd('/')}/usuarios/{uid}/";
+    }
+
+    private string ObtenerParametroAuth()
+    {
+        if (FirebaseAuthREST.Instance != null && !string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentToken))
+        {
+            return $"?auth={FirebaseAuthREST.Instance.CurrentToken}";
+        }
+        return "";
     }
 
     public void GuardarTablero(TableroData tablero, Action<bool> callback)
@@ -48,7 +57,7 @@ public class FirebaseManager : MonoBehaviour
 
     private IEnumerator RutinaGuardar(TableroData tablero, Action<bool> callback)
     {
-        string url = $"{ObtenerRutaUsuario()}tableros/{tablero.id}.json";
+        string url = $"{ObtenerRutaUsuario()}tableros/{tablero.id}.json{ObtenerParametroAuth()}";
         string jsonData = JsonUtility.ToJson(tablero);
 
         using (UnityWebRequest req = UnityWebRequest.Put(url, jsonData))
@@ -75,7 +84,7 @@ public class FirebaseManager : MonoBehaviour
 
     private IEnumerator RutinaObtenerTableros(Action<string> callback)
     {
-        string url = $"{ObtenerRutaUsuario()}tableros.json";
+        string url = $"{ObtenerRutaUsuario()}tableros.json{ObtenerParametroAuth()}";
 
         using (UnityWebRequest req = UnityWebRequest.Get(url))
         {
@@ -93,26 +102,23 @@ public class FirebaseManager : MonoBehaviour
         }
     }
 
-
     /// <summary>
-    /// Actualiza únicamente el título de un tablero en Firebase.
+    /// Actualiza únicamente el nombre de un tablero en Firebase.
     /// </summary>
-    public IEnumerator ActualizarNombreTablero(string tableroId, string nuevoTitulo, System.Action<bool> onComplete)
+    public IEnumerator ActualizarNombreTablero(string tableroId, string nuevoTitulo, Action<bool> onComplete)
     {
-        string token = PlayerPrefs.GetString("fb_token", "");
-        string uid = PlayerPrefs.GetString("fb_uid", "");
-
-        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(uid))
+        // Validamos que exista un usuario autenticado
+        if (FirebaseAuthREST.Instance == null || string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentUserId))
         {
-            Debug.LogError("FirebaseManager: Sesión no válida para actualizar.");
+            Debug.LogError("FirebaseManager: No hay un usuario activo para actualizar.");
             onComplete?.Invoke(false);
             yield break;
         }
 
-        string url = $"{databaseURL}/usuarios/{uid}/tableros/{tableroId}/titulo.json?auth={token}";
+        // Se actualiza el nodo /nombre.json del tablero
+        string url = $"{ObtenerRutaUsuario()}tableros/{tableroId}/nombre.json{ObtenerParametroAuth()}";
         
-        // Serializamos el string como JSON válido
-        string jsonBody = $"\"{nuevoTitulo}\"";
+        string jsonBody = $"\"{nuevoTitulo.Replace("\"", "\\\"")}\"";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
 
         using (UnityWebRequest request = new UnityWebRequest(url, "PUT"))
@@ -125,12 +131,12 @@ public class FirebaseManager : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"Tablero {tableroId} actualizado exitosamente.");
+                Debug.Log($"Tablero {tableroId} actualizado a '{nuevoTitulo}'.");
                 onComplete?.Invoke(true);
             }
             else
             {
-                Debug.LogError($"Error al actualizar tablero: {request.error} | {request.downloadHandler.text}");
+                Debug.LogError($"Error al actualizar tablero ({request.responseCode}): {request.error} | {request.downloadHandler.text}");
                 onComplete?.Invoke(false);
             }
         }
@@ -139,19 +145,16 @@ public class FirebaseManager : MonoBehaviour
     /// <summary>
     /// Elimina el nodo completo de un tablero en Firebase.
     /// </summary>
-    public IEnumerator EliminarTablero(string tableroId, System.Action<bool> onComplete)
+    public IEnumerator EliminarTablero(string tableroId, Action<bool> onComplete)
     {
-        string token = PlayerPrefs.GetString("fb_token", "");
-        string uid = PlayerPrefs.GetString("fb_uid", "");
-
-        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(uid))
+        if (FirebaseAuthREST.Instance == null || string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentUserId))
         {
-            Debug.LogError("FirebaseManager: Sesión no válida para eliminar.");
+            Debug.LogError("FirebaseManager: No hay un usuario activo para eliminar.");
             onComplete?.Invoke(false);
             yield break;
         }
 
-        string url = $"{databaseURL}/usuarios/{uid}/tableros/{tableroId}.json?auth={token}";
+        string url = $"{ObtenerRutaUsuario()}tableros/{tableroId}.json{ObtenerParametroAuth()}";
 
         using (UnityWebRequest request = UnityWebRequest.Delete(url))
         {
@@ -161,12 +164,12 @@ public class FirebaseManager : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"Tablero {tableroId} eliminado de la base de datos.");
+                Debug.Log($"Tablero {tableroId} eliminado de Firebase.");
                 onComplete?.Invoke(true);
             }
             else
             {
-                Debug.LogError($"Error al eliminar tablero: {request.error} | {request.downloadHandler.text}");
+                Debug.LogError($"Error al eliminar tablero ({request.responseCode}): {request.error} | {request.downloadHandler.text}");
                 onComplete?.Invoke(false);
             }
         }
