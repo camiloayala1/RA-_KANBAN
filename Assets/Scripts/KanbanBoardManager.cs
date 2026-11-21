@@ -67,6 +67,7 @@ public class KanbanBoardManager : MonoBehaviour
     {
         if (modalCrearNota != null)
         {
+            modalCrearNota.transform.SetAsLastSibling();
             modalCrearNota.SetActive(true);
             if (inputTextoNota != null)
             {

@@ -7,10 +7,13 @@ using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour
 {
-    [Header("UI Paneles")]
+    [Header("UI Paneles y Crear")]
     public GameObject modalCrear;
     public TMP_InputField inputNombre;
     public TextMeshProUGUI textoEstado;
+    public Button btnNuevoTablero;
+    public Button btnConfirmarCrear;
+    public Button btnCancelarCrear;
 
     [Header("Modal Opciones del Tablero")]
     public GameObject modalOpciones;
@@ -39,6 +42,18 @@ public class MainMenuController : MonoBehaviour
     public TextMeshProUGUI textoErrorLogin;
     public TextMeshProUGUI textoUsuarioConectado;
 
+    [Header("Panel Registro (Separado)")]
+    public GameObject subPanelLogin;
+    public GameObject subPanelRegistro;
+    public TMP_InputField inputRegistroCorreo;
+    public TMP_InputField inputRegistroPassword;
+    public TMP_InputField inputRegistroConfirmarPassword;
+    public TextMeshProUGUI textoErrorRegistro;
+    public TextMeshProUGUI textoExitoRegistro;
+    public Button btnIrARegistro;
+    public Button btnIrALogin;
+    public Button btnEjecutarRegistro;
+
     [Header("Lista ScrollView")]
     public Transform contentLista;
     public GameObject itemTableroPrefab; // Prefab con TableroItemUI o Button estándar
@@ -53,6 +68,28 @@ public class MainMenuController : MonoBehaviour
 
     private void ConfigurarModales()
     {
+        // 0. Modal de Creación de Tablero
+        if (modalCrear != null)
+            modalCrear.SetActive(false);
+
+        if (btnNuevoTablero != null)
+        {
+            btnNuevoTablero.onClick.RemoveAllListeners();
+            btnNuevoTablero.onClick.AddListener(AbrirModalCrear);
+        }
+
+        if (btnConfirmarCrear != null)
+        {
+            btnConfirmarCrear.onClick.RemoveAllListeners();
+            btnConfirmarCrear.onClick.AddListener(ConfirmarCrearTablero);
+        }
+
+        if (btnCancelarCrear != null)
+        {
+            btnCancelarCrear.onClick.RemoveAllListeners();
+            btnCancelarCrear.onClick.AddListener(CerrarModalCrear);
+        }
+
         // 1. Modal de Selección de Acción
         if (modalOpciones != null)
             modalOpciones.SetActive(false);
@@ -112,24 +149,61 @@ public class MainMenuController : MonoBehaviour
             btnConfirmarEliminarNo.onClick.RemoveAllListeners();
             btnConfirmarEliminarNo.onClick.AddListener(CerrarModalConfirmarEliminar);
         }
+
+        // 4. Configurar botones de navegación entre Login y Registro
+        if (btnIrARegistro != null)
+        {
+            btnIrARegistro.onClick.RemoveAllListeners();
+            btnIrARegistro.onClick.AddListener(MostrarTabRegistro);
+        }
+
+        if (btnIrALogin != null)
+        {
+            btnIrALogin.onClick.RemoveAllListeners();
+            btnIrALogin.onClick.AddListener(MostrarTabLogin);
+        }
+
+        if (btnEjecutarRegistro != null)
+        {
+            btnEjecutarRegistro.onClick.RemoveAllListeners();
+            btnEjecutarRegistro.onClick.AddListener(BotonRegistrarse);
+        }
+    }
+
+    public void MostrarTabLogin()
+    {
+        if (subPanelLogin != null) subPanelLogin.SetActive(true);
+        if (subPanelRegistro != null) subPanelRegistro.SetActive(false);
+
+        if (textoErrorLogin != null) textoErrorLogin.text = "";
+        if (textoErrorRegistro != null) textoErrorRegistro.text = "";
+        if (textoExitoRegistro != null) textoExitoRegistro.text = "";
+    }
+
+    public void MostrarTabRegistro()
+    {
+        if (subPanelLogin != null) subPanelLogin.SetActive(false);
+        if (subPanelRegistro != null) subPanelRegistro.SetActive(true);
+
+        if (textoErrorLogin != null) textoErrorLogin.text = "";
+        if (textoErrorRegistro != null) textoErrorRegistro.text = "";
+        if (textoExitoRegistro != null) textoExitoRegistro.text = "";
     }
 
     public void VerificarSesionUsuario()
     {
         if (FirebaseAuthREST.Instance == null || string.IsNullOrEmpty(FirebaseAuthREST.Instance.CurrentUserId))
         {
-            if (panelLogin != null) panelLogin.SetActive(true);
-            if (textoUsuarioConectado != null) textoUsuarioConectado.text = "Inicia sesión";
-            if (textoErrorLogin != null) textoErrorLogin.text = "";
+            // Redirigir a la escena de Login dedicada
+            SceneManager.LoadScene("Login");
+            return;
         }
-        else
-        {
-            if (panelLogin != null) panelLogin.SetActive(false);
-            if (textoUsuarioConectado != null)
-                textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
 
-            CargarListaTableros();
-        }
+        if (panelLogin != null) panelLogin.SetActive(false);
+        if (textoUsuarioConectado != null)
+            textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+
+        CargarListaTableros();
     }
 
     public void BotonIniciarSesion()
@@ -157,9 +231,9 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        MostrarErrorLogin("Conectando con Firebase...");
+        MostrarErrorLogin("Iniciando sesión...");
 
-        FirebaseAuthREST.Instance.IniciarOSuscribir(correo, pass, (exito, respuesta) =>
+        FirebaseAuthREST.Instance.IniciarSesion(correo, pass, (exito, respuesta) =>
         {
             if (exito)
             {
@@ -178,6 +252,80 @@ public class MainMenuController : MonoBehaviour
         });
     }
 
+    public void BotonRegistrarse()
+    {
+        if (textoErrorRegistro != null) textoErrorRegistro.text = "";
+        if (textoExitoRegistro != null) textoExitoRegistro.text = "";
+
+        // Si se tienen inputs dedicados de registro, usarlos; si no, recurrir a los principales
+        string correo = inputRegistroCorreo != null ? inputRegistroCorreo.text.Trim() : (inputCorreo != null ? inputCorreo.text.Trim() : "");
+        string pass = inputRegistroPassword != null ? inputRegistroPassword.text.Trim() : (inputPassword != null ? inputPassword.text.Trim() : "");
+        string confirmPass = inputRegistroConfirmarPassword != null ? inputRegistroConfirmarPassword.text.Trim() : pass;
+
+        if (string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(pass))
+        {
+            MostrarErrorRegistro("Ingresa correo y contraseña.");
+            return;
+        }
+
+        if (!correo.Contains("@") || !correo.Contains("."))
+        {
+            MostrarErrorRegistro("Ingresa un correo electrónico válido.");
+            return;
+        }
+
+        if (pass.Length < 6)
+        {
+            MostrarErrorRegistro("La contraseña debe tener mínimo 6 caracteres.");
+            return;
+        }
+
+        if (inputRegistroConfirmarPassword != null && pass != confirmPass)
+        {
+            MostrarErrorRegistro("Las contraseñas no coinciden.");
+            return;
+        }
+
+        if (FirebaseAuthREST.Instance == null)
+        {
+            MostrarErrorRegistro("Error: Falta componente FirebaseAuthREST.");
+            return;
+        }
+
+        MostrarErrorRegistro("Creando cuenta...");
+
+        FirebaseAuthREST.Instance.Registrarse(correo, pass, (exito, respuesta) =>
+        {
+            if (exito)
+            {
+                if (textoErrorRegistro != null) textoErrorRegistro.text = "";
+                if (textoExitoRegistro != null) textoExitoRegistro.text = "¡Cuenta creada exitosamente!";
+
+                // Entrar directamente al sistema con la cuenta recién creada
+                if (panelLogin != null) panelLogin.SetActive(false);
+
+                if (textoUsuarioConectado != null)
+                    textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+
+                CargarListaTableros();
+            }
+            else
+            {
+                MostrarErrorRegistro(TraducirErrorFirebase(respuesta));
+            }
+        });
+    }
+
+    private void MostrarErrorRegistro(string mensaje)
+    {
+        if (textoErrorRegistro != null)
+            textoErrorRegistro.text = mensaje;
+        else if (textoErrorLogin != null)
+            textoErrorLogin.text = mensaje;
+        else if (textoEstado != null)
+            textoEstado.text = mensaje;
+    }
+
     private void MostrarErrorLogin(string mensaje)
     {
         if (textoErrorLogin != null)
@@ -190,17 +338,19 @@ public class MainMenuController : MonoBehaviour
     {
         if (string.IsNullOrEmpty(jsonOError)) return "Error de conexión.";
         if (jsonOError.Contains("INVALID_PASSWORD") || jsonOError.Contains("INVALID_LOGIN_CREDENTIALS"))
-            return "Contraseña incorrecta.";
+            return "Contraseña o credenciales incorrectas.";
         if (jsonOError.Contains("EMAIL_NOT_FOUND"))
             return "El correo no está registrado.";
         if (jsonOError.Contains("INVALID_EMAIL"))
             return "Formato de correo no válido.";
         if (jsonOError.Contains("EMAIL_EXISTS"))
-            return "Credenciales incorrectas.";
+            return "Este correo ya está registrado. Por favor inicia sesión.";
         if (jsonOError.Contains("WEAK_PASSWORD"))
             return "Contraseña demasiado débil (mínimo 6 caracteres).";
         if (jsonOError.Contains("TOO_MANY_ATTEMPTS_TRY_LATER"))
-            return "Demasiados intentos. Intenta más tarde.";
+            return "Demasiados intentos erróneos. Intenta más tarde.";
+        if (jsonOError.Contains("USER_DISABLED"))
+            return "La cuenta de usuario ha sido deshabilitada.";
 
         return "Error al autenticar. Revisa tus datos.";
     }

@@ -71,7 +71,43 @@ public class FirebaseAuthREST : MonoBehaviour
     }
 
     /// <summary>
-    /// Intenta iniciar sesión; si la cuenta no existe en Firebase, la crea automáticamente.
+    /// Inicia sesión con correo y contraseña.
+    /// </summary>
+    public void IniciarSesion(string email, string password, Action<bool, string> callback)
+    {
+        StartCoroutine(RutinaLogin(email, password, (exito, respuesta) =>
+        {
+            if (exito)
+            {
+                callback?.Invoke(true, CurrentUserEmail);
+            }
+            else
+            {
+                callback?.Invoke(false, respuesta);
+            }
+        }));
+    }
+
+    /// <summary>
+    /// Crea una cuenta nueva en Firebase Auth con correo y contraseña.
+    /// </summary>
+    public void Registrarse(string email, string password, Action<bool, string> callback)
+    {
+        StartCoroutine(RutinaRegistro(email, password, (exito, respuesta) =>
+        {
+            if (exito)
+            {
+                callback?.Invoke(true, CurrentUserEmail);
+            }
+            else
+            {
+                callback?.Invoke(false, respuesta);
+            }
+        }));
+    }
+
+    /// <summary>
+    /// Intenta iniciar sesión; si la cuenta no existe en Firebase, la crea automáticamente (Mantenido por retrocompatibilidad).
     /// </summary>
     public void IniciarOSuscribir(string email, string password, Action<bool, string> callback)
     {

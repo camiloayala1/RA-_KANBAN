@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.ARFoundation;
@@ -137,7 +138,7 @@ public class BoardPlacementManager : MonoBehaviour
     {
         if (planeManager != null)
         {
-            planeManager.planesChanged += OnPlanesChanged;
+            planeManager.trackablesChanged.AddListener(OnTrackablesChanged);
         }
     }
 
@@ -149,7 +150,7 @@ public class BoardPlacementManager : MonoBehaviour
     {
         if (planeManager != null)
         {
-            planeManager.planesChanged -= OnPlanesChanged;
+            planeManager.trackablesChanged.RemoveListener(OnTrackablesChanged);
         }
     }
 
@@ -157,8 +158,8 @@ public class BoardPlacementManager : MonoBehaviour
     // CAMBIO DE PLANOS
     // ---------------------------------------------------------
 
-    private void OnPlanesChanged(
-        ARPlanesChangedEventArgs args)
+    private void OnTrackablesChanged(
+        ARTrackablesChangedEventArgs<ARPlane> args)
     {
         if (!boardPlaced)
             return;
@@ -167,7 +168,7 @@ public class BoardPlacementManager : MonoBehaviour
         OcultarPlanos(args.updated);
     }
 
-    private void OcultarPlanos(List<ARPlane> planes)
+    private void OcultarPlanos(IReadOnlyList<ARPlane> planes)
     {
         if (planes == null)
             return;
@@ -526,19 +527,15 @@ public class BoardPlacementManager : MonoBehaviour
 
     private void ProcesarToque()
     {
-        // 1. Toque en Celular (Android)
-        if (Input.touchCount > 0)
+        // 1. Toque en Celular (Android / iOS) con New Input System
+        if (Touchscreen.current != null)
         {
-            Touch touch = Input.GetTouch(0);
-
-            if (touch.phase == TouchPhase.Began)
+            var touch = Touchscreen.current.primaryTouch;
+            if (touch.press.wasPressedThisFrame)
             {
-                if (EventSystem.current != null)
+                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 {
-                    if (EventSystem.current.IsPointerOverGameObject(touch.fingerId))
-                    {
-                        return;
-                    }
+                    return;
                 }
 
                 if (currentPlane == null)
@@ -557,9 +554,9 @@ public class BoardPlacementManager : MonoBehaviour
             }
         }
 
-        // 2. Clic en Editor de Unity
+        // 2. Clic en Editor de Unity con New Input System
         #if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;

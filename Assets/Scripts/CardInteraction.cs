@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 
 public class CardInteraction : MonoBehaviour
@@ -29,71 +30,106 @@ public class CardInteraction : MonoBehaviour
 
     void Update()
     {
-        if (Input.touchCount == 0) return;
-
-        Touch touch = Input.GetTouch(0);
-
-        // 1. Iniciar toque
-        if (touch.phase == TouchPhase.Began)
+        // 1. Entrada táctil (Android / iOS) con New Input System
+        if (Touchscreen.current != null)
         {
-            if (IsPointerOverScreenUI(touch.fingerId)) return;
+            var touch = Touchscreen.current.primaryTouch;
+            Vector2 touchPos = touch.position.ReadValue();
 
-            Ray ray = arCamera.ScreenPointToRay(touch.position);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, 30f))
+            if (touch.press.wasPressedThisFrame)
             {
-                Transform hitTransform = hit.transform;
+                if (IsPointerOverScreenUI(touchPos)) return;
+                IniciarArrastre(touchPos);
+            }
+            else if (touch.press.isPressed && selectedCard != null)
+            {
+                ActualizarArrastre(touchPos);
+            }
+            else if (touch.press.wasReleasedThisFrame && selectedCard != null)
+            {
+                FinalizarArrastre(touchPos);
+            }
+            return;
+        }
 
-                if (hitTransform.CompareTag("PostIt") || hitTransform.name.Contains("PostIt"))
+        #if UNITY_EDITOR
+        // 2. Soporte con ratón para pruebas en Editor de Unity con New Input System
+        if (Mouse.current != null)
+        {
+            Vector2 mousePos = Mouse.current.position.ReadValue();
+
+            if (Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                if (IsPointerOverScreenUI(mousePos)) return;
+                IniciarArrastre(mousePos);
+            }
+            else if (Mouse.current.leftButton.isPressed && selectedCard != null)
+            {
+                ActualizarArrastre(mousePos);
+            }
+            else if (Mouse.current.leftButton.wasReleasedThisFrame && selectedCard != null)
+            {
+                FinalizarArrastre(mousePos);
+            }
+        }
+        #endif
+    }
+
+    private void IniciarArrastre(Vector2 screenPosition)
+    {
+        Ray ray = arCamera.ScreenPointToRay(screenPosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 30f))
+        {
+            Transform hitTransform = hit.transform;
+
+            if (hitTransform.CompareTag("PostIt") || hitTransform.name.Contains("PostIt"))
+            {
+                selectedCard = hitTransform;
+                originalParent = selectedCard.parent;
+                estaSobrePapelera = false;
+
+                Canvas parentCanvas = selectedCard.GetComponentInParent<Canvas>();
+                if (parentCanvas != null)
                 {
-                    selectedCard = hitTransform;
-                    originalParent = selectedCard.parent;
-                    estaSobrePapelera = false;
+                    canvasBoardRoot = parentCanvas.transform;
+                    selectedCard.SetParent(canvasBoardRoot, true);
+                    selectedCard.SetAsLastSibling();
+                }
 
-                    Canvas parentCanvas = selectedCard.GetComponentInParent<Canvas>();
-                    if (parentCanvas != null)
-                    {
-                        canvasBoardRoot = parentCanvas.transform;
-                        selectedCard.SetParent(canvasBoardRoot, true);
-                        selectedCard.SetAsLastSibling();
-                    }
+                selectedCard.position -= arCamera.transform.forward * liftDistance;
 
-                    selectedCard.position -= arCamera.transform.forward * liftDistance;
+                dragPlane = new Plane(-arCamera.transform.forward, selectedCard.position);
 
-                    dragPlane = new Plane(-arCamera.transform.forward, selectedCard.position);
-
-                    if (dragPlane.Raycast(ray, out float enterDistance))
-                    {
-                        offset = selectedCard.position - ray.GetPoint(enterDistance);
-                    }
+                if (dragPlane.Raycast(ray, out float enterDistance))
+                {
+                    offset = selectedCard.position - ray.GetPoint(enterDistance);
                 }
             }
         }
-        // 2. Arrastrar
-        else if (touch.phase == TouchPhase.Moved && selectedCard != null)
+    }
+
+    private void ActualizarArrastre(Vector2 screenPosition)
+    {
+        Ray ray = arCamera.ScreenPointToRay(screenPosition);
+
+        if (dragPlane.Raycast(ray, out float enterDistance))
         {
-            Ray ray = arCamera.ScreenPointToRay(touch.position);
-
-            if (dragPlane.Raycast(ray, out float enterDistance))
-            {
-                selectedCard.position = ray.GetPoint(enterDistance) + offset;
-            }
-
-            // Comprobar continuamente si el dedo/nota está encima del icono de la papelera
-            VerificarHoverPapelera(touch.position);
+            selectedCard.position = ray.GetPoint(enterDistance) + offset;
         }
-        // 3. Soltar
-        else if ((touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) && selectedCard != null)
+
+        VerificarHoverPapelera(screenPosition);
+    }
+
+    private void FinalizarArrastre(Vector2 screenPosition)
+    {
+        if (estaSobrePapelera && TrashDropZone.Instance != null)
         {
-            // Apaga el estado visual de hover si estaba activo
-            if (estaSobrePapelera && TrashDropZone.Instance != null)
-            {
-                TrashDropZone.Instance.SobrePapelera(false);
-            }
-
-            DropCard(touch.position);
-            estaSobrePapelera = false;
+            TrashDropZone.Instance.SobrePapelera(false);
         }
+
+        DropCard(screenPosition);
+        estaSobrePapelera = false;
     }
 
     private void VerificarHoverPapelera(Vector2 screenPosition)
@@ -102,7 +138,6 @@ public class CardInteraction : MonoBehaviour
 
         bool adentro = RectTransformUtility.RectangleContainsScreenPoint(trashZone, screenPosition);
 
-        // Solo notificar a la papelera cuando haya un cambio de estado
         if (adentro != estaSobrePapelera)
         {
             estaSobrePapelera = adentro;
@@ -186,13 +221,13 @@ public class CardInteraction : MonoBehaviour
         selectedCard = null;
     }
 
-    private bool IsPointerOverScreenUI(int fingerId)
+    private bool IsPointerOverScreenUI(Vector2 screenPosition)
     {
         if (EventSystem.current == null) return false;
 
         PointerEventData eventData = new PointerEventData(EventSystem.current)
         {
-            position = Input.GetTouch(fingerId).position
+            position = screenPosition
         };
 
         var results = new System.Collections.Generic.List<RaycastResult>();
@@ -200,10 +235,19 @@ public class CardInteraction : MonoBehaviour
 
         foreach (var r in results)
         {
-            if (r.gameObject.transform.root.name == "ScreenHUD")
+            if (r.gameObject != null && r.gameObject.transform.root.name == "ScreenHUD")
                 return true;
         }
 
+        return false;
+    }
+
+    private bool IsPointerOverScreenUI(int fingerId)
+    {
+        if (Touchscreen.current != null && Touchscreen.current.touches.Count > fingerId)
+        {
+            return IsPointerOverScreenUI(Touchscreen.current.touches[fingerId].position.ReadValue());
+        }
         return false;
     }
 }

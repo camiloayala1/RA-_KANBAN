@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "RA _KANBAN.sln"
+    "dotnet.defaultSolution": "RA _KANBAN.slnx"
 }
