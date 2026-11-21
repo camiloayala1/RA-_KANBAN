@@ -3284,7 +3284,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_PlanePrefab: {fileID: 1699817003223892609, guid: db52729768592c64998819551c41d972, type: 3}
-  m_DetectionMode: 2
+  m_DetectionMode: 3
 --- !u!114 &1589187744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3336,7 +3336,7 @@ MonoBehaviour:
   textoInstrucciones: {fileID: 1224206314}
   panelBotonesAccion: {fileID: 707762445}
   permitirParedes: 1
-  permitirSuelo: 0
+  permitirSuelo: 1
   usarSoloPlanosEstables: 1
 --- !u!114 &1589187747
 MonoBehaviour:
