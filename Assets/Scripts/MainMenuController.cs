@@ -59,6 +59,7 @@ public class MainMenuController : MonoBehaviour
     public GameObject itemTableroPrefab; // Prefab con TableroItemUI o Button estándar
 
     private TableroData tableroSeleccionado;
+    private bool estaCreandoTablero = false;
 
     void Start()
     {
@@ -375,6 +376,8 @@ public class MainMenuController : MonoBehaviour
 
     public void AbrirModalCrear()
     {
+        estaCreandoTablero = false;
+        if (btnConfirmarCrear != null) btnConfirmarCrear.interactable = true;
         modalCrear.SetActive(true);
         inputNombre.text = "";
         inputNombre.ActivateInputField();
@@ -382,11 +385,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CerrarModalCrear()
     {
+        estaCreandoTablero = false;
+        if (btnConfirmarCrear != null) btnConfirmarCrear.interactable = true;
         modalCrear.SetActive(false);
     }
 
     public void ConfirmarCrearTablero()
     {
+        // Protección estricta contra doble click / llamada duplicada de eventos
+        if (estaCreandoTablero) return;
+        estaCreandoTablero = true;
+        if (btnConfirmarCrear != null) btnConfirmarCrear.interactable = false;
+
         string nombre = string.IsNullOrWhiteSpace(inputNombre.text) ? "Tablero Sin Título" : inputNombre.text.Trim();
         string nuevoId = "tablero_" + DateTime.UtcNow.Ticks;
 
@@ -408,6 +418,8 @@ public class MainMenuController : MonoBehaviour
             }
             else
             {
+                estaCreandoTablero = false;
+                if (btnConfirmarCrear != null) btnConfirmarCrear.interactable = true;
                 if (textoEstado != null) textoEstado.text = "Error al guardar tablero.";
             }
         });

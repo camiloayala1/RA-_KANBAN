@@ -1281,7 +1281,7 @@ public static class FutureUIThemeEngine
             }
         }
 
-        // 5. Configurar Título Principal
+        // 5. Configurar Título Principal (Más grande y posicionado de forma armónica)
         GameObject tituloAppGo = GameObject.Find("Canvas/Fondo/Titulo_App");
         if (tituloAppGo != null)
         {
@@ -1289,15 +1289,15 @@ public static class FutureUIThemeEngine
             tRt.anchorMin = new Vector2(0.5f, 1f);
             tRt.anchorMax = new Vector2(0.5f, 1f);
             tRt.pivot = new Vector2(0.5f, 1f);
-            tRt.anchoredPosition = new Vector2(0f, -100f);
-            tRt.sizeDelta = new Vector2(960f, 120f);
+            tRt.anchoredPosition = new Vector2(0f, -210f);
+            tRt.sizeDelta = new Vector2(960f, 150f);
 
             TextMeshProUGUI tmp = tituloAppGo.GetComponent<TextMeshProUGUI>();
             if (tmp != null)
             {
-                tmp.text = "<b><color=#00F2FE>RA</color> // <color=#FFFFFF>KANBAN</color></b>\n<size=42%><color=#64748B>SPATIAL WORKSPACE OS 2027</color></size>";
+                tmp.text = "<b><color=#00F2FE>RA</color> // <color=#FFFFFF>KANBAN</color></b>\n<size=38%><color=#64748B>SPATIAL WORKSPACE OS 2027</color></size>";
                 tmp.alignment = TextAlignmentOptions.Center;
-                tmp.fontSize = 66;
+                tmp.fontSize = 78;
             }
         }
 
@@ -1309,13 +1309,13 @@ public static class FutureUIThemeEngine
             uRt.anchorMin = new Vector2(0.5f, 1f);
             uRt.anchorMax = new Vector2(0.5f, 1f);
             uRt.pivot = new Vector2(0.5f, 1f);
-            uRt.anchoredPosition = new Vector2(0f, -230f);
-            uRt.sizeDelta = new Vector2(960f, 60f);
+            uRt.anchoredPosition = new Vector2(0f, -390f);
+            uRt.sizeDelta = new Vector2(960f, 65f);
 
             TextMeshProUGUI uTmp = userGo.GetComponent<TextMeshProUGUI>();
             if (uTmp != null)
             {
-                uTmp.fontSize = 32;
+                uTmp.fontSize = 34;
                 uTmp.alignment = TextAlignmentOptions.Center;
                 uTmp.color = ColorTextWhite;
             }
@@ -1330,8 +1330,8 @@ public static class FutureUIThemeEngine
             bnRt.anchorMin = new Vector2(0.5f, 1f);
             bnRt.anchorMax = new Vector2(0.5f, 1f);
             bnRt.pivot = new Vector2(0.5f, 1f);
-            bnRt.anchoredPosition = new Vector2(0f, -315f);
-            bnRt.sizeDelta = new Vector2(860f, 115f);
+            bnRt.anchoredPosition = new Vector2(0f, -490f);
+            bnRt.sizeDelta = new Vector2(880f, 130f);
 
             btnNuevo = btnNuevoGo.GetComponent<Button>();
             Image btnImg = btnNuevoGo.GetComponent<Image>();
@@ -1347,11 +1347,11 @@ public static class FutureUIThemeEngine
             {
                 tmp.text = "<b>+ INICIALIZAR TABLERO</b>";
                 tmp.color = new Color(0.04f, 0.08f, 0.14f, 1f);
-                tmp.fontSize = 32;
+                tmp.fontSize = 34;
             }
         }
 
-        // 7. Estilizar Botón Cerrar Sesión (Esquina superior derecha protegida de notch)
+        // 7. Estilizar Botón Cerrar Sesión (Esquina superior derecha protegida de barra de estado y notch)
         GameObject btnCerrarSesionGo = GameObject.Find("Canvas/Fondo/Btn_CerrarSesion");
         if (btnCerrarSesionGo != null)
         {
@@ -1359,8 +1359,8 @@ public static class FutureUIThemeEngine
             csRt.anchorMin = new Vector2(1f, 1f);
             csRt.anchorMax = new Vector2(1f, 1f);
             csRt.pivot = new Vector2(1f, 1f);
-            csRt.anchoredPosition = new Vector2(-40f, -25f);
-            csRt.sizeDelta = new Vector2(200f, 80f);
+            csRt.anchoredPosition = new Vector2(-45f, -125f);
+            csRt.sizeDelta = new Vector2(210f, 85f);
 
             Image btnImg = btnCerrarSesionGo.GetComponent<Image>();
             if (btnImg != null && btnGlass != null)
@@ -1375,11 +1375,11 @@ public static class FutureUIThemeEngine
             {
                 tmp.text = "<b>SALIR</b>";
                 tmp.color = ColorCyanNeon;
-                tmp.fontSize = 24;
+                tmp.fontSize = 26;
             }
         }
 
-        // 8. Estilizar ScrollView y Lista de Tableros (Adaptable a altura dinámica de pantalla)
+        // 8. Estilizar ScrollView y Lista de Tableros (No tan arriba, distribuida hacia abajo)
         GameObject scrollGo = GameObject.Find("Canvas/Fondo/ListaTableros_Scroll");
         if (scrollGo != null)
         {
@@ -1387,8 +1387,8 @@ public static class FutureUIThemeEngine
             sRt.anchorMin = new Vector2(0.5f, 0f);
             sRt.anchorMax = new Vector2(0.5f, 1f);
             sRt.pivot = new Vector2(0.5f, 0.5f);
-            sRt.offsetMin = new Vector2(-450f, 30f);
-            sRt.offsetMax = new Vector2(450f, -460f);
+            sRt.offsetMin = new Vector2(-460f, 60f);
+            sRt.offsetMax = new Vector2(460f, -660f);
 
             Image scrollImg = scrollGo.GetComponent<Image>();
             if (scrollImg != null && frameGlassDark != null)
@@ -1396,6 +1396,18 @@ public static class FutureUIThemeEngine
                 scrollImg.sprite = frameGlassDark;
                 scrollImg.type = Image.Type.Sliced;
                 scrollImg.color = new Color(0.07f, 0.10f, 0.16f, 0.70f);
+            }
+
+            // Ajustar espaciado interno del Content
+            Transform contentT = scrollGo.transform.Find("Viewport/Content");
+            if (contentT != null)
+            {
+                var vlg = contentT.GetComponent<VerticalLayoutGroup>();
+                if (vlg != null)
+                {
+                    vlg.spacing = 25f;
+                    vlg.padding = new RectOffset(20, 20, 25, 25);
+                }
             }
         }
 
@@ -1889,15 +1901,32 @@ public static class FutureUIThemeEngine
                 if (inNom != null) so.FindProperty("inputNombre").objectReferenceValue = inNom;
 
                 var bConf = cCrear.Find("Btn_Confirmar")?.GetComponent<Button>();
-                if (bConf != null) so.FindProperty("btnConfirmarCrear").objectReferenceValue = bConf;
+                if (bConf != null)
+                {
+                    so.FindProperty("btnConfirmarCrear").objectReferenceValue = bConf;
+                    SerializedObject bSo = new SerializedObject(bConf);
+                    var pCalls = bSo.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
+                    if (pCalls != null && pCalls.arraySize > 0) { pCalls.ClearArray(); bSo.ApplyModifiedProperties(); }
+                }
 
                 var bCanc = cCrear.Find("Btn_Cancelar")?.GetComponent<Button>();
-                if (bCanc != null) so.FindProperty("btnCancelarCrear").objectReferenceValue = bCanc;
+                if (bCanc != null)
+                {
+                    so.FindProperty("btnCancelarCrear").objectReferenceValue = bCanc;
+                    SerializedObject bSo = new SerializedObject(bCanc);
+                    var pCalls = bSo.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
+                    if (pCalls != null && pCalls.arraySize > 0) { pCalls.ClearArray(); bSo.ApplyModifiedProperties(); }
+                }
             }
         }
 
         if (btnNuevoTablero != null)
+        {
             so.FindProperty("btnNuevoTablero").objectReferenceValue = btnNuevoTablero;
+            SerializedObject bSo = new SerializedObject(btnNuevoTablero);
+            var pCalls = bSo.FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
+            if (pCalls != null && pCalls.arraySize > 0) { pCalls.ClearArray(); bSo.ApplyModifiedProperties(); }
+        }
 
         // Modal Opciones
         GameObject mOpc = GameObject.Find("Canvas/Modal_OpcionesTablero");
@@ -2021,8 +2050,8 @@ public static class FutureUIThemeEngine
             fiRt.anchorMin = new Vector2(0.5f, 1f);
             fiRt.anchorMax = new Vector2(0.5f, 1f);
             fiRt.pivot = new Vector2(0.5f, 1f);
-            fiRt.anchoredPosition = new Vector2(0f, -150f);
-            fiRt.sizeDelta = new Vector2(920f, 95f);
+            fiRt.anchoredPosition = new Vector2(0f, -265f);
+            fiRt.sizeDelta = new Vector2(920f, 100f);
 
             Image img = fondoInstruccionesT.GetComponent<Image>();
             if (img != null && frameGlassCyan != null)
@@ -2041,7 +2070,7 @@ public static class FutureUIThemeEngine
             }
         }
 
-        // 3. Estilizar Botón Regresar al Menú (Top Left, Resguardado de Notch)
+        // 3. Estilizar Botón Regresar al Menú (Top Left, Protegido de la barra de notificaciones y notch)
         Transform btnMenuT = hudT.Find("Btn_RegresarMenu");
         if (btnMenuT != null)
         {
@@ -2049,8 +2078,8 @@ public static class FutureUIThemeEngine
             bmRt.anchorMin = new Vector2(0f, 1f);
             bmRt.anchorMax = new Vector2(0f, 1f);
             bmRt.pivot = new Vector2(0f, 1f);
-            bmRt.anchoredPosition = new Vector2(40f, -25f);
-            bmRt.sizeDelta = new Vector2(260f, 100f);
+            bmRt.anchoredPosition = new Vector2(45f, -135f);
+            bmRt.sizeDelta = new Vector2(270f, 105f);
 
             Image img = btnMenuT.GetComponent<Image>();
             if (img != null && btnGlass != null)
@@ -2070,7 +2099,7 @@ public static class FutureUIThemeEngine
             }
         }
 
-        // 4. Estilizar Panel de Botones de Acción (Centrados simétricamente y cómodos para dedos)
+        // 4. Estilizar Panel de Botones de Acción (Centrados simétricamente y debajo de la barra de estado)
         Transform panelBotonesT = hudT.Find("Panel_BotonesAccion");
         if (panelBotonesT != null)
         {
@@ -2081,8 +2110,8 @@ public static class FutureUIThemeEngine
                 bnRt.anchorMin = new Vector2(0.5f, 1f);
                 bnRt.anchorMax = new Vector2(0.5f, 1f);
                 bnRt.pivot = new Vector2(1f, 1f);
-                bnRt.anchoredPosition = new Vector2(-15f, -25f);
-                bnRt.sizeDelta = new Vector2(270f, 100f);
+                bnRt.anchoredPosition = new Vector2(-15f, -135f);
+                bnRt.sizeDelta = new Vector2(270f, 105f);
 
                 Image img = btnNueva.GetComponent<Image>();
                 if (img != null) { img.sprite = btnCyan; img.type = Image.Type.Sliced; img.color = Color.white; }
@@ -2103,8 +2132,8 @@ public static class FutureUIThemeEngine
                 brRt.anchorMin = new Vector2(0.5f, 1f);
                 brRt.anchorMax = new Vector2(0.5f, 1f);
                 brRt.pivot = new Vector2(0f, 1f);
-                brRt.anchoredPosition = new Vector2(15f, -25f);
-                brRt.sizeDelta = new Vector2(270f, 100f);
+                brRt.anchoredPosition = new Vector2(15f, -135f);
+                brRt.sizeDelta = new Vector2(270f, 105f);
 
                 Image img = btnReubicar.GetComponent<Image>();
                 if (img != null) { img.sprite = btnGlass; img.type = Image.Type.Sliced; img.color = Color.white; }
@@ -2392,7 +2421,8 @@ public static class FutureUIThemeEngine
             RectTransform rt = prefab.GetComponent<RectTransform>();
             if (rt != null)
             {
-                rt.sizeDelta = new Vector2(rt.sizeDelta.x, 120f);
+                rt.sizeDelta = new Vector2(rt.sizeDelta.x, 140f);
+                EditorUtility.SetDirty(rt);
             }
 
             Image img = prefab.GetComponent<Image>();
@@ -2407,7 +2437,7 @@ public static class FutureUIThemeEngine
             if (tmp != null)
             {
                 tmp.color = ColorTextWhite;
-                tmp.fontSize = 34;
+                tmp.fontSize = 36;
                 tmp.fontStyle = FontStyles.Bold;
                 tmp.alignment = TextAlignmentOptions.Center;
                 EditorUtility.SetDirty(tmp);
