@@ -157,6 +157,14 @@ public class KanbanBoardManager : MonoBehaviour
         if (tmp != null)
         {
             tmp.text = texto;
+            tmp.color = Color.white;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.fontSize = 36f;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 22f;
+            tmp.fontSizeMax = 46f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
         }
     }
 }

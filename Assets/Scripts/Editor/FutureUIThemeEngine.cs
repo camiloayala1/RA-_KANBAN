@@ -775,10 +775,16 @@ public static class FutureUIThemeEngine
             aImg.raycastTarget = false;
         }
 
-        // 7. Contenedor Raíz Adaptativo (Elevación Suave al abrir Teclado)
+        // 7. Contenedor Raíz Adaptativo (Elevación Suave al abrir Teclado y Resguardo de Notch)
         GameObject rootGo = CreateUIObject("Content_Root", canvasGo.transform);
         RectTransform rootRt = rootGo.GetComponent<RectTransform>();
         SetStretch(rootRt);
+
+        SafeAreaFitter saf = rootGo.GetComponent<SafeAreaFitter>();
+        if (saf == null) saf = rootGo.AddComponent<SafeAreaFitter>();
+        saf.mode = SafeAreaFitter.SafeAreaMode.TopAndBottom;
+        saf.extraTopPadding = 25f;
+        saf.extraBottomPadding = 20f;
 
         // --- A. ENCABEZADO SUPERIOR DE MARCA (Brand Hero) ---
         GameObject headerGo = CreateUIObject("Header_Brand", rootGo.transform);
@@ -1159,7 +1165,7 @@ public static class FutureUIThemeEngine
         SetStretch(phGo.GetComponent<RectTransform>());
         TextMeshProUGUI phTmp = phGo.AddComponent<TextMeshProUGUI>();
         phTmp.text = placeholderText;
-        phTmp.fontSize = 28;
+        phTmp.fontSize = 30;
         phTmp.fontStyle = FontStyles.Italic;
         phTmp.color = new Color(0.58f, 0.70f, 0.85f, 0.90f);
         phTmp.alignment = TextAlignmentOptions.MidlineLeft;
@@ -1169,7 +1175,8 @@ public static class FutureUIThemeEngine
         GameObject textGo = CreateUIObject("Text", textArea.transform);
         SetStretch(textGo.GetComponent<RectTransform>());
         TextMeshProUGUI textTmp = textGo.AddComponent<TextMeshProUGUI>();
-        textTmp.fontSize = 30;
+        textTmp.fontSize = 34;
+        textTmp.fontStyle = FontStyles.Bold;
         textTmp.color = ColorTextWhite;
         textTmp.alignment = TextAlignmentOptions.MidlineLeft;
         textTmp.raycastTarget = false;
@@ -1215,7 +1222,7 @@ public static class FutureUIThemeEngine
         Sprite btnDanger = LoadUISprite("Button_Capsule_Danger.png");
         Sprite inputGlass = LoadUISprite("Input_Field_Glass.png");
 
-        // 1. Configurar Fondo General
+        // 1. Configurar Fondo General y Adaptación a Notch (Safe Area)
         GameObject fondoGo = GameObject.Find("Canvas/Fondo");
         if (fondoGo != null)
         {
@@ -1224,6 +1231,12 @@ public static class FutureUIThemeEngine
             {
                 fondoImg.color = ColorBgVoid;
             }
+
+            SafeAreaFitter saf = fondoGo.GetComponent<SafeAreaFitter>();
+            if (saf == null) saf = fondoGo.AddComponent<SafeAreaFitter>();
+            saf.mode = SafeAreaFitter.SafeAreaMode.TopAndBottom;
+            saf.extraTopPadding = 25f;
+            saf.extraBottomPadding = 25f;
         }
 
         // 2. Eliminar completamente el panel de login viejo en MainMenu (ahora reside en su escena dedicada Login.unity)
@@ -1272,12 +1285,39 @@ public static class FutureUIThemeEngine
         GameObject tituloAppGo = GameObject.Find("Canvas/Fondo/Titulo_App");
         if (tituloAppGo != null)
         {
+            RectTransform tRt = tituloAppGo.GetComponent<RectTransform>();
+            tRt.anchorMin = new Vector2(0.5f, 1f);
+            tRt.anchorMax = new Vector2(0.5f, 1f);
+            tRt.pivot = new Vector2(0.5f, 1f);
+            tRt.anchoredPosition = new Vector2(0f, -100f);
+            tRt.sizeDelta = new Vector2(960f, 120f);
+
             TextMeshProUGUI tmp = tituloAppGo.GetComponent<TextMeshProUGUI>();
             if (tmp != null)
             {
-                tmp.text = "<b><color=#00F2FE>RA</color> // <color=#FFFFFF>KANBAN</color></b>\n<size=40%><color=#64748B>SPATIAL WORKSPACE OS 2027</color></size>";
+                tmp.text = "<b><color=#00F2FE>RA</color> // <color=#FFFFFF>KANBAN</color></b>\n<size=42%><color=#64748B>SPATIAL WORKSPACE OS 2027</color></size>";
                 tmp.alignment = TextAlignmentOptions.Center;
-                tmp.fontSize = 64;
+                tmp.fontSize = 66;
+            }
+        }
+
+        // 5.1 Estilizar Texto de Usuario / Operador Conectado
+        GameObject userGo = GameObject.Find("Canvas/Fondo/Textuser_name");
+        if (userGo != null)
+        {
+            RectTransform uRt = userGo.GetComponent<RectTransform>();
+            uRt.anchorMin = new Vector2(0.5f, 1f);
+            uRt.anchorMax = new Vector2(0.5f, 1f);
+            uRt.pivot = new Vector2(0.5f, 1f);
+            uRt.anchoredPosition = new Vector2(0f, -230f);
+            uRt.sizeDelta = new Vector2(960f, 60f);
+
+            TextMeshProUGUI uTmp = userGo.GetComponent<TextMeshProUGUI>();
+            if (uTmp != null)
+            {
+                uTmp.fontSize = 32;
+                uTmp.alignment = TextAlignmentOptions.Center;
+                uTmp.color = ColorTextWhite;
             }
         }
 
@@ -1286,6 +1326,13 @@ public static class FutureUIThemeEngine
         Button btnNuevo = null;
         if (btnNuevoGo != null)
         {
+            RectTransform bnRt = btnNuevoGo.GetComponent<RectTransform>();
+            bnRt.anchorMin = new Vector2(0.5f, 1f);
+            bnRt.anchorMax = new Vector2(0.5f, 1f);
+            bnRt.pivot = new Vector2(0.5f, 1f);
+            bnRt.anchoredPosition = new Vector2(0f, -315f);
+            bnRt.sizeDelta = new Vector2(860f, 115f);
+
             btnNuevo = btnNuevoGo.GetComponent<Button>();
             Image btnImg = btnNuevoGo.GetComponent<Image>();
             if (btnImg != null && btnCyan != null)
@@ -1300,14 +1347,21 @@ public static class FutureUIThemeEngine
             {
                 tmp.text = "<b>+ INICIALIZAR TABLERO</b>";
                 tmp.color = new Color(0.04f, 0.08f, 0.14f, 1f);
-                tmp.fontSize = 24;
+                tmp.fontSize = 32;
             }
         }
 
-        // 7. Estilizar Botón Cerrar Sesión
+        // 7. Estilizar Botón Cerrar Sesión (Esquina superior derecha protegida de notch)
         GameObject btnCerrarSesionGo = GameObject.Find("Canvas/Fondo/Btn_CerrarSesion");
         if (btnCerrarSesionGo != null)
         {
+            RectTransform csRt = btnCerrarSesionGo.GetComponent<RectTransform>();
+            csRt.anchorMin = new Vector2(1f, 1f);
+            csRt.anchorMax = new Vector2(1f, 1f);
+            csRt.pivot = new Vector2(1f, 1f);
+            csRt.anchoredPosition = new Vector2(-40f, -25f);
+            csRt.sizeDelta = new Vector2(200f, 80f);
+
             Image btnImg = btnCerrarSesionGo.GetComponent<Image>();
             if (btnImg != null && btnGlass != null)
             {
@@ -1319,16 +1373,23 @@ public static class FutureUIThemeEngine
             TextMeshProUGUI tmp = btnCerrarSesionGo.GetComponentInChildren<TextMeshProUGUI>();
             if (tmp != null)
             {
-                tmp.text = "SALIR";
-                tmp.color = ColorTextMuted;
-                tmp.fontSize = 18;
+                tmp.text = "<b>SALIR</b>";
+                tmp.color = ColorCyanNeon;
+                tmp.fontSize = 24;
             }
         }
 
-        // 8. Estilizar ScrollView y Lista de Tableros
+        // 8. Estilizar ScrollView y Lista de Tableros (Adaptable a altura dinámica de pantalla)
         GameObject scrollGo = GameObject.Find("Canvas/Fondo/ListaTableros_Scroll");
         if (scrollGo != null)
         {
+            RectTransform sRt = scrollGo.GetComponent<RectTransform>();
+            sRt.anchorMin = new Vector2(0.5f, 0f);
+            sRt.anchorMax = new Vector2(0.5f, 1f);
+            sRt.pivot = new Vector2(0.5f, 0.5f);
+            sRt.offsetMin = new Vector2(-450f, 30f);
+            sRt.offsetMax = new Vector2(450f, -460f);
+
             Image scrollImg = scrollGo.GetComponent<Image>();
             if (scrollImg != null && frameGlassDark != null)
             {
@@ -1937,7 +1998,7 @@ public static class FutureUIThemeEngine
         }
         Transform hudT = hudGo.transform;
 
-        // 1. Configurar CanvasScaler para Mobile Portrait
+        // 1. Configurar CanvasScaler y Adaptación Safe Area para Mobile Portrait
         CanvasScaler scaler = hudGo.GetComponent<CanvasScaler>();
         if (scaler != null)
         {
@@ -1945,6 +2006,12 @@ public static class FutureUIThemeEngine
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0f; // Match width
         }
+
+        SafeAreaFitter saf = hudGo.GetComponent<SafeAreaFitter>();
+        if (saf == null) saf = hudGo.AddComponent<SafeAreaFitter>();
+        saf.mode = SafeAreaFitter.SafeAreaMode.TopAndBottom;
+        saf.extraTopPadding = 25f;
+        saf.extraBottomPadding = 25f;
 
         // 2. Estilizar Panel de Instrucciones (Banner Flotante Holográfico)
         Transform fondoInstruccionesT = hudT.Find("Fondo_Instrucciones");
@@ -1955,7 +2022,7 @@ public static class FutureUIThemeEngine
             fiRt.anchorMax = new Vector2(0.5f, 1f);
             fiRt.pivot = new Vector2(0.5f, 1f);
             fiRt.anchoredPosition = new Vector2(0f, -150f);
-            fiRt.sizeDelta = new Vector2(860f, 80f);
+            fiRt.sizeDelta = new Vector2(920f, 95f);
 
             Image img = fondoInstruccionesT.GetComponent<Image>();
             if (img != null && frameGlassCyan != null)
@@ -1969,12 +2036,12 @@ public static class FutureUIThemeEngine
             if (tmp != null)
             {
                 tmp.color = ColorCyanNeon;
-                tmp.fontSize = 24;
+                tmp.fontSize = 26;
                 tmp.alignment = TextAlignmentOptions.Center;
             }
         }
 
-        // 3. Estilizar Botón Regresar al Menú (Top Left)
+        // 3. Estilizar Botón Regresar al Menú (Top Left, Resguardado de Notch)
         Transform btnMenuT = hudT.Find("Btn_RegresarMenu");
         if (btnMenuT != null)
         {
@@ -1982,8 +2049,8 @@ public static class FutureUIThemeEngine
             bmRt.anchorMin = new Vector2(0f, 1f);
             bmRt.anchorMax = new Vector2(0f, 1f);
             bmRt.pivot = new Vector2(0f, 1f);
-            bmRt.anchoredPosition = new Vector2(40f, -40f);
-            bmRt.sizeDelta = new Vector2(240f, 85f);
+            bmRt.anchoredPosition = new Vector2(40f, -25f);
+            bmRt.sizeDelta = new Vector2(260f, 100f);
 
             Image img = btnMenuT.GetComponent<Image>();
             if (img != null && btnGlass != null)
@@ -1998,12 +2065,12 @@ public static class FutureUIThemeEngine
             {
                 tmp.text = "<b>← MENÚ</b>";
                 tmp.color = ColorTextWhite;
-                tmp.fontSize = 22;
+                tmp.fontSize = 28;
                 tmp.alignment = TextAlignmentOptions.Center;
             }
         }
 
-        // 4. Estilizar Panel de Botones de Acción
+        // 4. Estilizar Panel de Botones de Acción (Centrados simétricamente y cómodos para dedos)
         Transform panelBotonesT = hudT.Find("Panel_BotonesAccion");
         if (panelBotonesT != null)
         {
@@ -2011,11 +2078,11 @@ public static class FutureUIThemeEngine
             if (btnNueva != null && btnCyan != null)
             {
                 RectTransform bnRt = btnNueva.GetComponent<RectTransform>();
-                bnRt.anchorMin = new Vector2(0f, 1f);
-                bnRt.anchorMax = new Vector2(0f, 1f);
-                bnRt.pivot = new Vector2(0f, 1f);
-                bnRt.anchoredPosition = new Vector2(300f, -40f);
-                bnRt.sizeDelta = new Vector2(240f, 85f);
+                bnRt.anchorMin = new Vector2(0.5f, 1f);
+                bnRt.anchorMax = new Vector2(0.5f, 1f);
+                bnRt.pivot = new Vector2(1f, 1f);
+                bnRt.anchoredPosition = new Vector2(-15f, -25f);
+                bnRt.sizeDelta = new Vector2(270f, 100f);
 
                 Image img = btnNueva.GetComponent<Image>();
                 if (img != null) { img.sprite = btnCyan; img.type = Image.Type.Sliced; img.color = Color.white; }
@@ -2024,7 +2091,7 @@ public static class FutureUIThemeEngine
                 {
                     tmp.text = "<b>+ NOTA</b>";
                     tmp.color = new Color(0.04f, 0.08f, 0.14f, 1f);
-                    tmp.fontSize = 24;
+                    tmp.fontSize = 30;
                     tmp.alignment = TextAlignmentOptions.Center;
                 }
             }
@@ -2033,20 +2100,20 @@ public static class FutureUIThemeEngine
             if (btnReubicar != null && btnGlass != null)
             {
                 RectTransform brRt = btnReubicar.GetComponent<RectTransform>();
-                brRt.anchorMin = new Vector2(1f, 1f);
-                brRt.anchorMax = new Vector2(1f, 1f);
-                brRt.pivot = new Vector2(1f, 1f);
-                brRt.anchoredPosition = new Vector2(-40f, -40f);
-                brRt.sizeDelta = new Vector2(240f, 85f);
+                brRt.anchorMin = new Vector2(0.5f, 1f);
+                brRt.anchorMax = new Vector2(0.5f, 1f);
+                brRt.pivot = new Vector2(0f, 1f);
+                brRt.anchoredPosition = new Vector2(15f, -25f);
+                brRt.sizeDelta = new Vector2(270f, 100f);
 
                 Image img = btnReubicar.GetComponent<Image>();
                 if (img != null) { img.sprite = btnGlass; img.type = Image.Type.Sliced; img.color = Color.white; }
                 TextMeshProUGUI tmp = btnReubicar.GetComponentInChildren<TextMeshProUGUI>();
                 if (tmp != null)
                 {
-                    tmp.text = "REUBICAR";
+                    tmp.text = "<b>REUBICAR</b>";
                     tmp.color = ColorTextWhite;
-                    tmp.fontSize = 22;
+                    tmp.fontSize = 28;
                     tmp.alignment = TextAlignmentOptions.Center;
                 }
             }
@@ -2322,6 +2389,12 @@ public static class FutureUIThemeEngine
         if (File.Exists(pathItem))
         {
             GameObject prefab = PrefabUtility.LoadPrefabContents(pathItem);
+            RectTransform rt = prefab.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.sizeDelta = new Vector2(rt.sizeDelta.x, 120f);
+            }
+
             Image img = prefab.GetComponent<Image>();
             if (img != null && frameGlassDark != null)
             {
@@ -2330,11 +2403,14 @@ public static class FutureUIThemeEngine
                 img.color = Color.white;
             }
 
-            TextMeshProUGUI tmp = prefab.GetComponentInChildren<TextMeshProUGUI>();
+            TMP_Text tmp = prefab.GetComponentInChildren<TMP_Text>();
             if (tmp != null)
             {
                 tmp.color = ColorTextWhite;
-                tmp.fontSize = 26;
+                tmp.fontSize = 34;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.alignment = TextAlignmentOptions.Center;
+                EditorUtility.SetDirty(tmp);
             }
 
             PrefabUtility.SaveAsPrefabAsset(prefab, pathItem);
@@ -2342,10 +2418,12 @@ public static class FutureUIThemeEngine
             Debug.Log("[FutureUI] ItemTablero_Btn.prefab actualizado.");
         }
 
-        // 2. Prefabs PostIt
-        string pathPostIt = "Assets/Prefabs/PostIt.prefab";
-        if (File.Exists(pathPostIt))
+        // 2. Prefabs PostIt y PostIt_Prefab (Ambos actualizados con alto contraste blanco)
+        string[] postItPaths = new string[] { "Assets/Prefabs/PostIt.prefab", "Assets/Prefabs/PostIt_Prefab.prefab" };
+        foreach (var pathPostIt in postItPaths)
         {
+            if (!File.Exists(pathPostIt)) continue;
+
             GameObject prefab = PrefabUtility.LoadPrefabContents(pathPostIt);
             Image img = prefab.GetComponent<Image>();
             if (img != null && cardPostIt != null)
@@ -2355,33 +2433,23 @@ public static class FutureUIThemeEngine
                 img.color = Color.white;
             }
 
-            TextMeshProUGUI tmp = prefab.GetComponentInChildren<TextMeshProUGUI>();
+            TMP_Text tmp = prefab.GetComponentInChildren<TMP_Text>();
             if (tmp != null)
             {
-                tmp.color = ColorTextWhite;
-                tmp.fontSize = 22;
+                tmp.color = Color.white;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.fontSize = 36;
+                tmp.textWrappingMode = TextWrappingModes.Normal;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.enableAutoSizing = true;
+                tmp.fontSizeMin = 22;
+                tmp.fontSizeMax = 46;
+                EditorUtility.SetDirty(tmp);
             }
 
             PrefabUtility.SaveAsPrefabAsset(prefab, pathPostIt);
             PrefabUtility.UnloadPrefabContents(prefab);
-            Debug.Log("[FutureUI] PostIt.prefab actualizado.");
-        }
-
-        string pathPostItAlt = "Assets/Prefabs/PostIt_Prefab.prefab";
-        if (File.Exists(pathPostItAlt))
-        {
-            GameObject prefab = PrefabUtility.LoadPrefabContents(pathPostItAlt);
-            Image img = prefab.GetComponent<Image>();
-            if (img != null && cardPostIt != null)
-            {
-                img.sprite = cardPostIt;
-                img.type = Image.Type.Sliced;
-                img.color = Color.white;
-            }
-
-            PrefabUtility.SaveAsPrefabAsset(prefab, pathPostItAlt);
-            PrefabUtility.UnloadPrefabContents(prefab);
-            Debug.Log("[FutureUI] PostIt_Prefab.prefab actualizado.");
+            Debug.Log($"[FutureUI] {pathPostIt} actualizado con texto blanco de alto contraste.");
         }
 
         // 3. Prefab KanbanBoard (3D AR Board)

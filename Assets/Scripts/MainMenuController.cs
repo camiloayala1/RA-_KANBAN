@@ -201,7 +201,7 @@ public class MainMenuController : MonoBehaviour
 
         if (panelLogin != null) panelLogin.SetActive(false);
         if (textoUsuarioConectado != null)
-            textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+            textoUsuarioConectado.text = $"<b>Operador:</b> <color=#00F2FE>{FirebaseAuthREST.Instance.CurrentUserEmail}</color>";
 
         CargarListaTableros();
     }
@@ -241,7 +241,7 @@ public class MainMenuController : MonoBehaviour
                 if (panelLogin != null) panelLogin.SetActive(false);
 
                 if (textoUsuarioConectado != null)
-                    textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+                    textoUsuarioConectado.text = $"<b>Operador:</b> <color=#00F2FE>{FirebaseAuthREST.Instance.CurrentUserEmail}</color>";
 
                 CargarListaTableros();
             }
@@ -305,7 +305,7 @@ public class MainMenuController : MonoBehaviour
                 if (panelLogin != null) panelLogin.SetActive(false);
 
                 if (textoUsuarioConectado != null)
-                    textoUsuarioConectado.text = "Usuario: " + FirebaseAuthREST.Instance.CurrentUserEmail;
+                    textoUsuarioConectado.text = $"<b>Operador:</b> <color=#00F2FE>{FirebaseAuthREST.Instance.CurrentUserEmail}</color>";
 
                 CargarListaTableros();
             }
