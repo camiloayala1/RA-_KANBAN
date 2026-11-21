@@ -1269,7 +1269,7 @@ public static class FutureUIThemeEngine
         string[] modalNames = new string[] { "Modal_Crear", "Modal_OpcionesTablero", "Modal_EditarTablero", "Modal_ConfirmarEliminar" };
         foreach (var mName in modalNames)
         {
-            GameObject mGo = GameObject.Find("Canvas/" + mName);
+            GameObject mGo = FindModal(mName);
             if (mGo != null)
             {
                 var gr = mGo.GetComponent<GraphicRaycaster>();
@@ -1425,9 +1425,20 @@ public static class FutureUIThemeEngine
         Debug.Log("[FutureUI] MainMenu.unity actualizado con éxito.");
     }
 
+    private static GameObject FindModal(string modalName)
+    {
+        Transform canvasT = GameObject.Find("Canvas")?.transform;
+        if (canvasT != null)
+        {
+            Transform m = canvasT.Find(modalName);
+            if (m != null) return m.gameObject;
+        }
+        return GameObject.Find("Canvas/" + modalName);
+    }
+
     private static void EstilizarModalCrearTablero(Sprite frameGlass, Sprite btnPrimary, Sprite btnSecondary, Sprite inputGlass)
     {
-        GameObject modal = GameObject.Find("Canvas/Modal_Crear");
+        GameObject modal = FindModal("Modal_Crear");
         if (modal == null) return;
 
         // Overlay a pantalla completa que bloquea toques debajo
@@ -1567,12 +1578,20 @@ public static class FutureUIThemeEngine
             }
         }
 
+        // Adaptabilidad al Teclado Móvil (Elevación dinámica para que los botones nunca queden tapados)
+        ModalKeyboardShift shift = modal.GetComponent<ModalKeyboardShift>();
+        if (shift == null) shift = modal.AddComponent<ModalKeyboardShift>();
+        shift.containerToShift = caja.GetComponent<RectTransform>();
+        shift.shiftAmount = 400f;
+        shift.shiftSmoothTime = 0.16f;
+        shift.restY = 0f;
+
         modal.SetActive(false);
     }
 
     private static void EstilizarModalOpciones(Sprite frameGlass, Sprite btnPrimary, Sprite btnSecondary, Sprite btnDanger)
     {
-        GameObject modal = GameObject.Find("Canvas/Modal_OpcionesTablero");
+        GameObject modal = FindModal("Modal_OpcionesTablero");
         if (modal == null) return;
 
         SetStretch(modal.GetComponent<RectTransform>());
@@ -1689,12 +1708,20 @@ public static class FutureUIThemeEngine
             }
         }
 
+        // Adaptabilidad al Teclado Móvil (Elevación dinámica para que los botones nunca queden tapados)
+        ModalKeyboardShift shift = modal.GetComponent<ModalKeyboardShift>();
+        if (shift == null) shift = modal.AddComponent<ModalKeyboardShift>();
+        shift.containerToShift = caja.GetComponent<RectTransform>();
+        shift.shiftAmount = 400f;
+        shift.shiftSmoothTime = 0.16f;
+        shift.restY = 0f;
+
         modal.SetActive(false);
     }
 
     private static void EstilizarModalEditar(Sprite frameGlass, Sprite btnPrimary, Sprite btnSecondary, Sprite inputGlass)
     {
-        GameObject modal = GameObject.Find("Canvas/Modal_EditarTablero");
+        GameObject modal = FindModal("Modal_EditarTablero");
         if (modal == null) return;
 
         SetStretch(modal.GetComponent<RectTransform>());
@@ -1795,12 +1822,20 @@ public static class FutureUIThemeEngine
             }
         }
 
+        // Adaptabilidad al Teclado Móvil (Elevación dinámica para que los botones nunca queden tapados)
+        ModalKeyboardShift shift = modal.GetComponent<ModalKeyboardShift>();
+        if (shift == null) shift = modal.AddComponent<ModalKeyboardShift>();
+        shift.containerToShift = caja.GetComponent<RectTransform>();
+        shift.shiftAmount = 400f;
+        shift.shiftSmoothTime = 0.16f;
+        shift.restY = 0f;
+
         modal.SetActive(false);
     }
 
     private static void EstilizarModalEliminar(Sprite frameGlass, Sprite btnDanger, Sprite btnSecondary)
     {
-        GameObject modal = GameObject.Find("Canvas/Modal_ConfirmarEliminar");
+        GameObject modal = FindModal("Modal_ConfirmarEliminar");
         if (modal == null) return;
 
         SetStretch(modal.GetComponent<RectTransform>());
@@ -1879,6 +1914,14 @@ public static class FutureUIThemeEngine
             }
         }
 
+        // Adaptabilidad al Teclado Móvil (Elevación dinámica para que los botones nunca queden tapados)
+        ModalKeyboardShift shift = modal.GetComponent<ModalKeyboardShift>();
+        if (shift == null) shift = modal.AddComponent<ModalKeyboardShift>();
+        shift.containerToShift = caja.GetComponent<RectTransform>();
+        shift.shiftAmount = 400f;
+        shift.shiftSmoothTime = 0.16f;
+        shift.restY = 0f;
+
         modal.SetActive(false);
     }
 
@@ -1890,7 +1933,7 @@ public static class FutureUIThemeEngine
         SerializedObject so = new SerializedObject(mm);
 
         // Modal Crear
-        GameObject mCrear = GameObject.Find("Canvas/Modal_Crear");
+        GameObject mCrear = FindModal("Modal_Crear");
         if (mCrear != null)
         {
             so.FindProperty("modalCrear").objectReferenceValue = mCrear;
@@ -1929,7 +1972,7 @@ public static class FutureUIThemeEngine
         }
 
         // Modal Opciones
-        GameObject mOpc = GameObject.Find("Canvas/Modal_OpcionesTablero");
+        GameObject mOpc = FindModal("Modal_OpcionesTablero");
         if (mOpc != null)
         {
             so.FindProperty("modalOpciones").objectReferenceValue = mOpc;
@@ -1956,7 +1999,7 @@ public static class FutureUIThemeEngine
         }
 
         // Modal Editar
-        GameObject mEdit = GameObject.Find("Canvas/Modal_EditarTablero");
+        GameObject mEdit = FindModal("Modal_EditarTablero");
         if (mEdit != null)
         {
             so.FindProperty("modalEditar").objectReferenceValue = mEdit;
@@ -1975,7 +2018,7 @@ public static class FutureUIThemeEngine
         }
 
         // Modal Confirmar Eliminar
-        GameObject mElim = GameObject.Find("Canvas/Modal_ConfirmarEliminar");
+        GameObject mElim = FindModal("Modal_ConfirmarEliminar");
         if (mElim != null)
         {
             so.FindProperty("modalConfirmarEliminar").objectReferenceValue = mElim;
@@ -2400,6 +2443,14 @@ public static class FutureUIThemeEngine
             }
             so.ApplyModifiedProperties();
         }
+
+        // Adaptabilidad al Teclado Móvil (Elevación dinámica para que los botones nunca queden tapados)
+        ModalKeyboardShift shift = modal.GetComponent<ModalKeyboardShift>();
+        if (shift == null) shift = modal.AddComponent<ModalKeyboardShift>();
+        shift.containerToShift = caja.GetComponent<RectTransform>();
+        shift.shiftAmount = 400f;
+        shift.shiftSmoothTime = 0.16f;
+        shift.restY = 0f;
 
         modal.SetActive(false);
     }
